@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/flask-2.3+-green.svg)](https://flask.palletsprojects.com/)
-[![CI/CD](https://github.com/Ataberkan/BIST_Profiling/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/your-username/BIST_Profiling/actions)
+[![CI/CD](https://github.com/Ataberkan/BIST_Profiling/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/Ataberkan/BIST_Profiling/actions)
 
 
 > An advanced data analysis and visualization platform that provides artificial intelligence-supported investment analysis and risk profiling for BIST (Borsa Istanbul) stocks.
