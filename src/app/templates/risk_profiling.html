@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Risk Profiling{% endblock %}
+
+{% block extra_css %}
+<style>
+    .risk-header {
+        background: linear-gradient(to right, #1e3c72, #2a5298);
+        border-radius: 8px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .cluster-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-top: 4px solid;
+    }
+    
+    .cluster-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .profile-card {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .chart-container {
+        height: 400px;
+        margin: 2rem 0;
+    }
+    
+    .test-container {
+        background-color: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .question {
+        margin-bottom: 1.5rem;
+    }
+    
+    .options {
+        display: grid;
+        gap: 0.5rem;
+    }
+    
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .option-label:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .option-label input {
+        margin-right: 0.75rem;
+    }
+    
+    .cluster-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stat {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem;
+        background-color: #f9fafb;
+        border-radius: 6px;
+    }
+    
+    .stat .label {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .stat .value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+    
+    .positive {
+        color: #34A853;
+    }
+    
+    .negative {
+        color: #EA4335;
+    }
+    
+    .stock-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .stock-tag {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        background-color: #f3f4f6;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .stock-tag:hover {
+        background-color: #e5e7eb;
+    }
+    
+    .profile-result {
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+        background-color: #f0f9ff;
+        border-left: 4px solid #2563eb;
+        display: none;
+    }
+    
+    .profile-icon {
+        width: 64px;
+        height: 64px;
+        background-color: #2563eb;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .profile-icon i {
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .profile-description {
+        margin-top: 1rem;
+    }
+    
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .heat-map {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .map-item {
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .cluster-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .heat-map {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Title -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Risk Profiling</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Risk Profiling Description -->
+<div class="risk-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">Risk Profiling Assessment</h3>
+    <p class="mb-4">Discover your ideal investment strategy with our comprehensive risk assessment. Based on your risk tolerance and investment preferences, we'll recommend the most suitable stock clusters for your portfolio.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Personalized Assessment</h4>
+            <p class="text-white/80">Answer a few questions to determine your investor profile and risk tolerance level.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Tailored Recommendations</h4>
+            <p class="text-white/80">Get stock cluster recommendations that match your investment style and goals.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Profile Test -->
+<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-8">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Risk Profile Test</h3>
+    <p class="text-gray-500 mb-4">Answer the questions below to determine your risk profile and discover the most suitable investment strategy for you.</p>
+    
+    <form id="riskProfileForm" class="test-container">
+        <div class="question">
+            <h4 class="font-medium text-gray-900 mb-2">1. What is your priority when investing?</h4>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="priority" value="1">
+                    <span>Protecting my capital and minimizing risk</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="priority" value="2">
+                    <span>Generating stable income with a reasonable risk</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="priority" value="3">
+                    <span>Capital growth and income balance</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="priority" value="4">
+                    <span>Ready to take high risk for high return</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="question">
+            <h4 class="font-medium text-gray-900 mb-2">2. How would you react if the value of your investments decreased by 20%?</h4>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="reaction" value="1">
+                    <span>Panic and sell immediately</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="reaction" value="2">
+                    <span>Worried and consider selling a portion</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="reaction" value="3">
+                    <span>Wait and hope for the market to recover</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="reaction" value="4">
+                    <span>See an opportunity to buy more stocks</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="question">
+            <h4 class="font-medium text-gray-900 mb-2">3. How long is your investment horizon?</h4>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="horizon" value="1">
+                    <span>Less than 1 year</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="horizon" value="2">
+                    <span>1-3 years</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="horizon" value="3">
+                    <span>3-5 years</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="horizon" value="4">
+                    <span>5 years or more</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="question">
+            <h4 class="font-medium text-gray-900 mb-2">4. How much weight should be in your portfolio for volatile (volatile) stocks?</h4>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="volatility" value="1">
+                    <span>%0-10: I want minimum volatility</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="volatility" value="2">
+                    <span>%10-25: I can accept low volatility</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="volatility" value="3">
+                    <span>%25-50: I can accept medium volatility</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="volatility" value="4">
+                    <span>%50+: I can accept high volatility</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="question">
+            <h4 class="font-medium text-gray-900 mb-2">5. Which situation do you feel more comfortable in?</h4>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="comfort" value="1">
+                    <span>%5 gain and almost no risk of loss</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="comfort" value="2">
+                    <span>%10 gain and %5 risk of loss</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="comfort" value="3">
+                    <span>%15 gain and %10 risk of loss</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="comfort" value="4">
+                    <span>%25+ gain and %20 risk of loss</span>
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit" class="mt-4 bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+            Determine My Profile
+        </button>
+    </form>
+    
+    <div id="profileResult" class="profile-result">
+        <div class="flex items-center">
+            <div class="profile-icon">
+                <i class="fas fa-user-chart"></i>
+            </div>
+            <div>
+                <h4 id="profileTitle" class="text-lg font-semibold text-gray-900">Your Investor Profile</h4>
+                <p id="profileSubtitle" class="text-gray-600">Profile summary will appear here</p>
+            </div>
+        </div>
+        <div class="profile-description">
+            <p id="profileDescription" class="text-gray-700 mb-4"></p>
+            <h5 class="font-medium text-gray-900 mb-2">Recommended Clusters:</h5>
+            <div id="recommendedClusters" class="heat-map"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Cluster Details -->
+<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-8">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Investment Profile Recommendations</h3>
+    <p class="text-gray-500 mb-4">Based on your risk profile assessment, here are the investment approaches that best match different investor types.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="profile-card">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-medium text-gray-900">Conservative Investor</h4>
+                <span class="cluster-badge" style="background-color: rgba(34, 197, 94, 0.6)">
+                    Low Risk
+                </span>
+            </div>
+            
+            <div class="cluster-stats">
+                <div class="stat">
+                    <span class="label">Risk Tolerance</span>
+                    <span class="value">Low</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Expected Return</span>
+                    <span class="value">5-8%</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Time Horizon</span>
+                    <span class="value">Long-term</span>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <p class="text-gray-600 text-sm">Prefers stable, dividend-paying stocks with low volatility. Focuses on capital preservation over high returns.</p>
+            </div>
+            
+            <div class="mt-4">
+                <h5 class="text-sm font-medium text-gray-800 mb-2">Recommended Strategy:</h5>
+                <p class="text-sm text-gray-600">Focus on banking, utility, and established industrial stocks with consistent performance.</p>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-medium text-gray-900">Moderate Investor</h4>
+                <span class="cluster-badge" style="background-color: rgba(59, 130, 246, 0.6)">
+                    Medium Risk
+                </span>
+            </div>
+            
+            <div class="cluster-stats">
+                <div class="stat">
+                    <span class="label">Risk Tolerance</span>
+                    <span class="value">Medium</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Expected Return</span>
+                    <span class="value">8-12%</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Time Horizon</span>
+                    <span class="value">Medium-term</span>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <p class="text-gray-600 text-sm">Seeks balanced approach between growth and stability. Willing to accept moderate volatility for better returns.</p>
+            </div>
+            
+            <div class="mt-4">
+                <h5 class="text-sm font-medium text-gray-800 mb-2">Recommended Strategy:</h5>
+                <p class="text-sm text-gray-600">Diversified portfolio with mix of stable and growth-oriented stocks across different sectors.</p>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-medium text-gray-900">Aggressive Investor</h4>
+                <span class="cluster-badge" style="background-color: rgba(239, 68, 68, 0.6)">
+                    High Risk
+                </span>
+            </div>
+            
+            <div class="cluster-stats">
+                <div class="stat">
+                    <span class="label">Risk Tolerance</span>
+                    <span class="value">High</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Expected Return</span>
+                    <span class="value">15%+</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Time Horizon</span>
+                    <span class="value">Long-term</span>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <p class="text-gray-600 text-sm">Comfortable with high volatility and potential losses in pursuit of maximum returns. Growth-focused approach.</p>
+            </div>
+            
+            <div class="mt-4">
+                <h5 class="text-sm font-medium text-gray-800 mb-2">Recommended Strategy:</h5>
+                <p class="text-sm text-gray-600">High-growth stocks, technology companies, and emerging market opportunities with higher volatility.</p>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-medium text-gray-900">Market Observer</h4>
+                <span class="cluster-badge" style="background-color: rgba(245, 158, 11, 0.6)">
+                    Variable Risk
+                </span>
+            </div>
+            
+            <div class="cluster-stats">
+                <div class="stat">
+                    <span class="label">Risk Tolerance</span>
+                    <span class="value">Variable</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Expected Return</span>
+                    <span class="value">10-15%</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Time Horizon</span>
+                    <span class="value">Flexible</span>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <p class="text-gray-600 text-sm">Actively monitors market conditions and adjusts strategy accordingly. Opportunistic investor.</p>
+            </div>
+            
+            <div class="mt-4">
+                <h5 class="text-sm font-medium text-gray-800 mb-2">Recommended Strategy:</h5>
+                <p class="text-sm text-gray-600">Dynamic portfolio allocation based on market trends and opportunities across all sectors.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Investor Profile Descriptions -->
+<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Investor Profiles</h3>
+    <p class="text-gray-500 mb-4">Investor profiles and recommended strategies for different risk tolerance levels.</p>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div class="profile-card">
+            <h4 class="text-lg font-medium text-gray-900 mb-2">Conservative Investor</h4>
+            <p class="text-gray-600 mb-4">Prioritizes protecting his capital and seeking stable income. Avoids sudden market changes.</p>
+            <div class="bg-blue-50 p-4 rounded">
+                <h5 class="font-medium text-blue-800 mb-2">Recommendations:</h5>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Low volatility stocks</li>
+                    <li>Stocks with high dividend yield</li>
+                    <li>Companies with stable income stream</li>
+                    <li>Defense sector stocks</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <h4 class="text-lg font-medium text-gray-900 mb-2">Balanced Investor</h4>
+            <p class="text-gray-600 mb-4">Seeks balance between risk and return. Prefers medium-term investments and emphasizes diversification.</p>
+            <div class="bg-blue-50 p-4 rounded">
+                <h5 class="font-medium text-blue-800 mb-2">Recommendations:</h5>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Medium volatility stocks</li>
+                    <li>Companies with strong fundamental indicators</li>
+                    <li>Mix of growth and value stocks</li>
+                    <li>Stocks from various sectors</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <h4 class="text-lg font-medium text-gray-900 mb-2">Growth-Oriented Investor</h4>
+            <p class="text-gray-600 mb-4">Prioritizes capital growth and is ready for higher risk. Long-term thinking and willing to take more risk.</p>
+            <div class="bg-blue-50 p-4 rounded">
+                <h5 class="font-medium text-blue-800 mb-2">Recommendations:</h5>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Growth potential stocks</li>
+                    <li>Technology and innovative sectors</li>
+                    <li>Medium-high volatility stocks</li>
+                    <li>Companies that catch market trends</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="profile-card">
+            <h4 class="text-lg font-medium text-gray-900 mb-2">Aggressive Investor</h4>
+            <p class="text-gray-600 mb-4">Ready to take high risk for high return. Looks for short-term opportunities and tries to turn market fluctuations into an advantage.</p>
+            <div class="bg-blue-50 p-4 rounded">
+                <h5 class="font-medium text-blue-800 mb-2">Recommendations:</h5>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Stocks with high beta value</li>
+                    <li>Small/medium-sized companies with high volatility</li>
+                    <li>Stocks in cyclical sectors</li>
+                    <li>Stocks that can benefit from trend changes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Risk profiling page loaded');
+    
+    // Risk Profile Form Processing
+    const riskProfileForm = document.getElementById('riskProfileForm');
+    const profileResult = document.getElementById('profileResult');
+    
+    if (riskProfileForm) {
+        riskProfileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Calculate risk score
+            let riskScore = 0;
+            const formData = new FormData(riskProfileForm);
+            
+            // Process each question
+            for (let [name, value] of formData.entries()) {
+                if (name.startsWith('q')) {
+                    riskScore += parseInt(value);
+                }
+            }
+            
+            // Determine investor profile
+            let profile, description, recommendations;
+            
+            if (riskScore <= 12) {
+                profile = 'Conservative Investor';
+                description = 'You prefer stable investments with lower risk and consistent returns. Capital preservation is more important than high growth.';
+                recommendations = [
+                    'Focus on dividend-paying stocks',
+                    'Consider banking and utility sectors',
+                    'Maintain diversified portfolio',
+                    'Long-term investment horizon'
+                ];
+            } else if (riskScore <= 18) {
+                profile = 'Moderate Investor';
+                description = 'You seek a balanced approach between growth and stability. You are willing to accept moderate risk for better returns.';
+                recommendations = [
+                    'Mix of growth and value stocks',
+                    'Diversify across sectors',
+                    'Balance risk and return',
+                    'Medium to long-term horizon'
+                ];
+            } else if (riskScore <= 24) {
+                profile = 'Aggressive Investor';
+                description = 'You are comfortable with high volatility and potential losses in pursuit of maximum returns. Growth is your primary objective.';
+                recommendations = [
+                    'Focus on growth stocks',
+                    'Consider technology and emerging sectors',
+                    'Accept higher volatility',
+                    'Long-term investment strategy'
+                ];
+            } else {
+                profile = 'Market Observer';
+                description = 'You actively monitor market conditions and adjust your strategy accordingly. You are an opportunistic investor.';
+                recommendations = [
+                    'Dynamic portfolio allocation',
+                    'Monitor market trends closely',
+                    'Be ready to adjust strategy',
+                    'Flexible investment approach'
+                ];
+            }
+            
+            // Display results
+            profileResult.innerHTML = `
+                <div class="profile-result-card">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Your Investor Profile: ${profile}</h3>
+                    <p class="text-gray-600 mb-4">${description}</p>
+                    <h4 class="text-md font-medium text-gray-800 mb-2">Recommendations:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+                        ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800">
+                            <strong>Risk Score:</strong> ${riskScore}/30 - 
+                            Visit our <a href="/clusters" class="underline">Cluster Analysis</a> page to see which stock clusters match your profile.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            profileResult.style.display = 'block';
+            profileResult.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+});
+</script>
+{% endblock %} 

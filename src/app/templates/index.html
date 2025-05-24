@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Home{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(to right, #1a3e72, #2563eb);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 8px;
+    }
+    
+    .stock-card {
+        transition: transform 0.3s;
+    }
+    
+    .stock-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .market-ticker {
+        background-color: rgba(37, 99, 235, 0.05);
+        white-space: nowrap;
+        overflow: hidden;
+        padding: 0.5rem 0;
+        position: relative;
+    }
+    
+    .ticker-content {
+        display: inline-block;
+        animation: ticker 30s linear infinite;
+    }
+    
+    .ticker-item {
+        display: inline-block;
+        margin-right: 1.5rem;
+    }
+    
+    @keyframes ticker {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    
+    .dashboard-card {
+        height: 100%;
+        transition: all 0.2s ease;
+    }
+    
+    .dashboard-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .news-ticker {
+        height: 300px;
+        overflow-y: auto;
+    }
+    
+    .heat-map {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.25rem;
+    }
+    
+    .heat-map-item {
+        padding: 0.5rem;
+        text-align: center;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+    
+    .stock-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .stock-table th {
+        background-color: #f8f9fa;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #4b5563;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .stock-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.875rem;
+    }
+    
+    .stock-table tr:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .up-value {
+        color: #10b981;
+        font-weight: 500;
+    }
+    
+    .down-value {
+        color: #ef4444;
+        font-weight: 500;
+    }
+    
+    .neutral-value {
+        color: #6b7280;
+    }
+    
+    .cluster-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+        color: white;
+    }
+    
+    .cluster-0 {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .cluster-1 {
+        background-color: rgba(34, 197, 94, 0.15);
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .cluster-2 {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .cluster-3 {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Market Indicator Band -->
+<div class="market-ticker mb-6 shadow-sm border border-gray-200 rounded-lg">
+    <div class="ticker-content">
+        <div class="ticker-item font-bold">BIST-30: <span class="text-green-600">5.482,51 +1,45%</span></div>
+    </div>
+</div>
+
+<!-- Hero Section (Simplified) -->
+<div class="hero-section mb-6">
+    <div class="mx-auto max-w-7xl px-6 py-4">
+        <div class="lg:flex lg:items-center lg:justify-between">
+            <div class="max-w-2xl">
+                <h1 class="text-3xl font-bold tracking-tight text-white">BIST Stocks Profile Analysis</h1>
+                <p class="mt-2 text-lg text-white/90">Optimize your investment decisions with AI-powered risk-return clustering model.</p>
+            </div>
+            <div class="mt-4 lg:mt-0">
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ url_for('main.clusters') }}" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm hover:bg-white/90">Clustering Results</a>
+                    <a href="{{ url_for('main.investor_profile') }}" class="rounded-md bg-primary/30 px-3 py-2 text-sm font-semibold text-white border border-white/20 hover:bg-primary/40">Determine My Investor Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard -->
+<div class="mb-6">
+    <div class="mx-auto max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <!-- Market Summary Cards -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Avg. Change</span>
+                    <i class="fas fa-chart-line text-primary/70"></i>
+                </div>
+                <div class="mt-2 {% if avg_change > 0 %}text-green-600{% else %}text-red-600{% endif %} text-xl font-bold">
+                    {{ avg_change|round(2) }}%
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Avg. Volatility</span>
+                    <i class="fas fa-chart-bar text-primary/70"></i>
+                </div>
+                <div class="mt-2 text-gray-800 text-xl font-bold">
+                    {{ avg_volatility|round(2) }}%
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Max Gain</span>
+                    <i class="fas fa-arrow-trend-up text-green-500"></i>
+                </div>
+                <div class="mt-2">
+                    <div class="text-green-600 text-xl font-bold">{{ max_gain|round(2) }}%</div>
+                    <div class="text-xs mt-1 text-gray-500">{{ max_gain_stock }}</div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Max Loss</span>
+                    <i class="fas fa-arrow-trend-down text-red-500"></i>
+                </div>
+                <div class="mt-2">
+                    <div class="text-red-600 text-xl font-bold">{{ max_loss|round(2) }}%</div>
+                    <div class="text-xs mt-1 text-gray-500">{{ max_loss_stock }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BIST-30 Stocks Table -->
+<div class="mb-8">
+    <div class="mx-auto max-w-7xl">
+        <div class="border-b border-gray-200 pb-2 mb-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold tracking-tight text-gray-900">BIST-30 Stocks</h2>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="stockSearch" placeholder="Stock search..." class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                    <select id="clusterFilter" class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                        <option value="all">All Clusters</option>
+                        <option value="0">Cluster 0</option>
+                        <option value="1">Cluster 1</option>
+                        <option value="2">Cluster 2</option>
+                        <option value="3">Cluster 3</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="stock-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Last Price</th>
+                            <th>Change %</th>
+                            <th>Volume (TL)</th>
+                            <th>Volatility</th>
+                            <th>Beta</th>
+                            <th>Cluster</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in all_stocks %}
+                        <tr>
+                            <td class="font-medium">{{ stock.code }}</td>
+                            <td>{{ "%.2f"|format(stock.avg_price) }}</td>
+                            <td class="{% if stock.avg_change > 0 %}up-value{% elif stock.avg_change < 0 %}down-value{% else %}neutral-value{% endif %}">
+                                {% if stock.avg_change > 0 %}+{% endif %}{{ "%.2f"|format(stock.avg_change) }}%
+                            </td>
+                            <td>{{ "%.1f"|format(stock.avg_price * 100 / 10) }}M</td>
+                            <td>{{ "%.2f"|format(stock.volatility) }}%</td>
+                            <td>{{ "%.2f"|format(stock.beta) }}</td>
+                            <td><span class="cluster-badge cluster-{{ stock.cluster_id }}">Cluster {{ stock.cluster_id }}</span></td>
+                            <td><a href="{{ url_for('main.stock_detail', stock_code=stock.code) }}" class="text-primary hover:text-primary/80"><i class="fas fa-arrow-right"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center p-4 border-t border-gray-100">
+                <div id="stock-count-display" class="text-sm text-gray-500">Displaying: 10 / {{ all_stocks|length }} stocks</div>
+                <div class="flex space-x-2">
+                    <button type="button" class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">Previous</button>
+                    <button type="button" class="px-2 py-1 text-xs font-medium rounded bg-primary/10 text-primary">1</button>
+                    <button type="button" class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">2</button>
+                    <button type="button" class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">3</button>
+                    <button type="button" class="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Two-Column Section -->
+<div class="mb-8">
+    <div class="mx-auto max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Cluster Distribution -->
+            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cluster Distribution</h3>
+                <div class="space-y-3">
+                    {% for cluster in clusters %}
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium">{{ cluster.name }}</span>
+                            <span class="text-xs font-medium text-gray-500">{{ cluster.stock_count }} stocks</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full" style="width: {{ (cluster.stock_count / total_stocks * 100)|round }}%; background-color: {{ cluster.color }};"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4 text-sm text-gray-600">
+                    <p>Based on clustering analysis results, most of the BIST-30 stocks are in low and medium volatility clusters.</p>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('main.clusters') }}" class="text-primary text-sm font-medium hover:underline">View all clustering results →</a>
+                </div>
+            </div>
+            
+            <!-- Market News -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Latest Market News</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border border-gray-100 rounded-lg p-3">
+                        <span class="text-xs font-medium text-gray-500">05.15.2025 | 18:45</span>
+                        <h4 class="font-medium text-gray-900 mt-1">TCMB Interest Rate Decision</h4>
+                        <p class="text-sm text-gray-600 mt-1">The Central Bank kept the policy interest rate at %42.5.</p>
+                    </div>
+                    <div class="border border-gray-100 rounded-lg p-3">
+                        <span class="text-xs font-medium text-gray-500">05.15.2025 | 16:20</span>
+                        <h4 class="font-medium text-gray-900 mt-1">Important Agreement from ASELS</h4>
+                        <p class="text-sm text-gray-600 mt-1">Aselsan signed a new export agreement worth $750 million in the defense sector.</p>
+                    </div>
+                    <div class="border border-gray-100 rounded-lg p-3">
+                        <span class="text-xs font-medium text-gray-500">05.15.2025 | 14:15</span>
+                        <h4 class="font-medium text-gray-900 mt-1">GARAN Dividend Announcement</h4>
+                        <p class="text-sm text-gray-600 mt-1">Garanti Bankası announced a cash dividend of 2.75 TL per share.</p>
+                    </div>
+                    <div class="border border-gray-100 rounded-lg p-3">
+                        <span class="text-xs font-medium text-gray-500">05.15.2025 | 10:30</span>
+                        <h4 class="font-medium text-gray-900 mt-1">Industry Production Data Released</h4>
+                        <p class="text-sm text-gray-600 mt-1">Industry production increased by %4.6 in April compared to the previous year.</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-right">
+                    <a href="{{ url_for('main.market_observer') }}" class="text-primary text-sm font-medium hover:underline">View all news →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Warning and Last Update -->
+<div class="mb-6">
+    <div class="mx-auto max-w-7xl">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-triangle-exclamation text-yellow-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-xs text-yellow-700">
+                        This site's analyses and evaluations are for informational purposes only and do not constitute investment advice. Data is current as of {{ update_date }}.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('stockSearch');
+    const clusterFilter = document.getElementById('clusterFilter');
+    const tableRows = document.querySelectorAll('.stock-table tbody tr');
+    const rowsPerPage = 10;
+    let currentPage = 1;
+
+    function getVisibleRows() {
+        return Array.from(tableRows).filter(row =>
+            !row.hasAttribute('data-filtered-out') && !row.hasAttribute('data-filtered-out-cluster')
+        );
+    }
+
+    function showPage(page) {
+        const visibleRows = getVisibleRows();
+        const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+        
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        if (totalPages === 0) page = 1;
+        
+        currentPage = page;
+
+        // Önce tüm satırları gizle
+        tableRows.forEach((row, index) => {
+            row.style.display = 'none';
+        });
+        
+        // Sadece mevcut sayfadaki satırları göster
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        
+        for (let i = start; i < end && i < visibleRows.length; i++) {
+            visibleRows[i].style.display = '';
+        }
+
+        // Buton stillerini güncelle
+        updatePaginationButtons(totalPages);
+
+        // Gösterilen kayıt sayısını güncelle
+        const showing = Math.min(rowsPerPage, visibleRows.length - (currentPage - 1) * rowsPerPage);
+        const statusElement = document.getElementById('stock-count-display');
+        if (statusElement) {
+            statusElement.textContent = `Displaying: ${showing} / ${visibleRows.length} stocks`;
+        }
+    }
+
+    function updatePaginationButtons(totalPages) {
+        const paginationContainer = document.querySelector('.flex.space-x-2');
+        if (!paginationContainer) return;
+
+        const buttons = paginationContainer.querySelectorAll('button');
+        buttons.forEach((btn) => {
+            const text = btn.textContent.trim();
+            
+            // Stil sıfırlama
+            btn.classList.remove('bg-primary/10', 'text-primary', 'opacity-50', 'cursor-not-allowed');
+            btn.classList.add('bg-gray-100', 'text-gray-600');
+            btn.disabled = false;
+            
+            // Aktif sayfa vurgulama
+            if (text === currentPage.toString()) {
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+                btn.classList.add('bg-primary/10', 'text-primary');
+            }
+            
+            // Önceki butonu
+            if (text === 'Previous' && currentPage === 1) {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.disabled = true;
+            }
+            
+            // Sonraki butonu
+            if (text === 'Next' && (currentPage === totalPages || totalPages === 0)) {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.disabled = true;
+            }
+        });
+    }
+
+    // Event delegation kullanarak sayfalama butonlarına tıklama olayları
+    document.addEventListener('click', function(e) {
+        // Sadece sayfalama butonlarını kontrol et
+        if (e.target.tagName === 'BUTTON' && e.target.closest('.flex.space-x-2')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (e.target.disabled) return;
+            
+            const text = e.target.textContent.trim();
+            
+            if (text === 'Previous') {
+                showPage(currentPage - 1);
+            } else if (text === 'Next') {
+                showPage(currentPage + 1);
+            } else if (!isNaN(parseInt(text))) {
+                showPage(parseInt(text));
+            }
+        }
+    });
+
+    // Arama fonksiyonu
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            tableRows.forEach(row => {
+                const stockCode = row.querySelector('td:first-child').textContent.toLowerCase();
+                
+                if (stockCode.includes(searchTerm)) {
+                    row.removeAttribute('data-filtered-out');
+                } else {
+                    row.setAttribute('data-filtered-out', 'search');
+                }
+            });
+            
+            currentPage = 1;
+            showPage(1);
+        });
+    }
+
+    // Küme filtresi
+    if (clusterFilter) {
+        clusterFilter.addEventListener('change', function() {
+            const selectedCluster = this.value;
+            
+            tableRows.forEach(row => {
+                if (selectedCluster === 'all') {
+                    row.removeAttribute('data-filtered-out-cluster');
+                } else {
+                    const clusterBadge = row.querySelector('.cluster-badge');
+                    if (clusterBadge && clusterBadge.classList.contains(`cluster-${selectedCluster}`)) {
+                        row.removeAttribute('data-filtered-out-cluster');
+                    } else {
+                        row.setAttribute('data-filtered-out-cluster', 'true');
+                    }
+                }
+            });
+            
+            currentPage = 1;
+            showPage(1);
+        });
+    }
+
+    // Başlangıç
+    showPage(1);
+});
+</script>
+{% endblock %} 

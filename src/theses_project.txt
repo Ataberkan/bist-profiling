@@ -1,0 +1,56 @@
+Chapter 1 – Introduction
+1.1 Introduction to the Thesis
+In recent years, the interest in financial markets has increased significantly among individual
+investors. Especially in developing economies like Turkey, the Borsa Istanbul (BIST) 100 index
+represents a critical benchmark for evaluating company performances and economic trends.
+Investors face the challenge of making informed decisions in a volatile and information-heavy
+environment. One of the key issues is understanding the risk and return dynamics of various
+sectors and companies, which requires complex analysis and experience.
+This thesis addresses this problem by proposing a data-driven clustering model that classifies
+BIST 100 companies based on their financial performance indicators. The model aims to group
+companies into similar risk-return profiles using unsupervised learning algorithms. Furthermore,
+an interactive web application will be developed to guide investors in choosing appropriate
+company groups based on their personal risk preferences. By combining machine learning and
+financial analytics, the study provides a practical tool for investment decision support.
+1.2 Purpose of the Study
+The main goal of this thesis is to develop a machine learning-based clustering model that
+classifies BIST 100 companies according to key financial indicators such as volatility, return,
+beta, trading volume, and sector. After identifying meaningful clusters, the system will offer
+investment suggestions based on the user's selected risk profile. This approach aims to support
+individual investors in their decision-making process by providing data-backed, easy-tounderstand insights.
+1.3 Scope of the Study
+This study focuses on companies listed in the BIST 100 index. Only publicly available financial
+indicators such as historical stock returns, volatility, beta coefficients, P/E ratios, market
+capitalization, and sector information will be used for analysis. The project excludes
+macroeconomic indicators, real-time data processing, and external events (e.g., political changes,
+breaking news).
+The machine learning part of the study will focus on unsupervised clustering techniques such as
+K-means, supported by dimensionality reduction methods like PCA. The web application will be
+developed using Flask to provide a comprehensive interactive investment suggestion tool with user authentication and personalized dashboards. Deep learning
+2
+models, portfolio optimization algorithms, or transaction-level simulations are beyond the scope
+due to time and complexity constraints.
+1.4 Research Methodology
+The study will be conducted in the following stages:
+• Data Collection & Preprocessing: Financial data of BIST 100 companies will be collected
+from sources such as Yahoo Finance or KAP. Cleaning and normalization steps will be
+applied.
+• Feature Engineering: Key financial metrics like average return, standard deviation
+(volatility), beta, and volume will be calculated.
+• Clustering Analysis: Unsupervised learning algorithms like K-means and DBSCAN will
+be applied to group companies into clusters based on similar financial behavior.
+• Visualization & Interpretation: Clusters will be visualized and interpreted in terms of
+investment risk and sector distribution.
+• Web Application Development: A Flask-based web application will be developed with user authentication, personalized dashboards, and interactive data visualizations. Users will be able to select a risk profile and receive matching cluster suggestions, along with summary statistics and company lists.
+1.5 Structure of the Thesis
+• Chapter 2: Literature review on financial analytics, stock clustering, risk analysis, and
+investor profiling.
+• Chapter 3: Description of the dataset, preprocessing steps, and feature engineering
+techniques.
+• Chapter 4: Implementation of clustering models, evaluation of results, and visualization.
+• Chapter 5: Development of the Flask web application, including user authentication, personalized dashboards, and API integration for real-time data.
+• Chapter 6: Summary of findings, conclusions, limitations, and suggestions for future
+work, including integration with real-time data and user feedback loops.
+----------------------------------------------------------------------------------------------
+S28457
+Ataberkan Gazi

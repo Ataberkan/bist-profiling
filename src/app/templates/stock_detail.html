@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %}{{ stock.code }} | BIST Profil Analiz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stock-header {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .stock-nav {
+        background-color: var(--bg-primary);
+        border-bottom: 1px solid var(--border-primary);
+        padding: 1rem;
+        border-radius: 0 0 12px 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .stock-price {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stock-change {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .positive { color: var(--positive-color); font-weight: 600; }
+    .negative { color: var(--negative-color); font-weight: 600; }
+    .neutral { color: var(--neutral-color); font-weight: 600; }
+    
+    .stock-card {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stock-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-item {
+        text-align: center;
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        border: 1px solid var(--border-primary);
+    }
+    
+    .metric-label {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .cluster-0 { 
+        background-color: rgba(59, 130, 246, 0.15); 
+        color: #1e40af; 
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .cluster-1 { 
+        background-color: rgba(34, 197, 94, 0.15); 
+        color: #15803d; 
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .cluster-2 { 
+        background-color: rgba(245, 158, 11, 0.15); 
+        color: #92400e; 
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .cluster-3 { 
+        background-color: rgba(239, 68, 68, 0.15); 
+        color: #b91c1c; 
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+    }
+    
+    .info-table th,
+    .info-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .info-table th {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    
+    .info-table tr:hover {
+        background-color: var(--bg-secondary);
+    }
+    
+    .risk-low { 
+        background-color: rgba(34, 197, 94, 0.15); 
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .risk-medium { 
+        background-color: rgba(245, 158, 11, 0.15); 
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .risk-high { 
+        background-color: rgba(239, 68, 68, 0.15); 
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .risk-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-600);
+        color: white;
+        border: 1px solid var(--primary-600);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-700);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: var(--bg-primary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-primary);
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+    }
+    
+    .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+        color: var(--text-tertiary);
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+    }
+    
+    .tab.active {
+        color: var(--primary-600);
+        border-bottom-color: var(--primary-600);
+        background: transparent;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .chart-container {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb mb-4">
+    <a href="{{ url_for('main.index') }}">Anasayfa</a> / 
+    <span class="text-gray-900 font-medium">{{ stock.code }}</span>
+</div>
+
+<!-- Hisse Başlığı -->
+<div class="stock-header">
+    <div class="mx-auto max-w-7xl px-6">
+        <div class="lg:flex lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold">{{ stock.code }}</h1>
+                <p class="text-lg opacity-90 mt-1">{{ stock.company_name or 'BIST-30 Hissesi' }}</p>
+            </div>
+            <div class="mt-4 lg:mt-0 text-right">
+                <div class="stock-price">{{ "%.2f"|format(stock.avg_price) }} ₺</div>
+                <div class="stock-change {% if stock.avg_change > 0 %}positive{% elif stock.avg_change < 0 %}negative{% else %}neutral{% endif %}">
+                    {% if stock.avg_change > 0 %}+{% endif %}{{ "%.2f"|format(stock.avg_change) }}%
+                </div>
+                <div class="text-sm opacity-75 mt-1">Son güncelleme: {{ update_date }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana Metrikler -->
+<div class="mx-auto max-w-7xl px-6 mb-8">
+    <div class="metric-grid">
+        <div class="metric-item">
+            <div class="metric-value text-gray-800">{{ "%.2f"|format(stock.volatility) }}%</div>
+            <div class="metric-label">Volatility</div>
+            <div class="risk-badge risk-{{ 'high' if stock.volatility > 4.5 else 'medium' if stock.volatility > 3.0 else 'low' }}">
+                {% if stock.volatility > 4.5 %}High Risk
+                {% elif stock.volatility > 3.0 %}Medium Risk
+                {% else %}Low Risk
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="metric-item">
+            <div class="metric-value text-gray-800">{{ "%.2f"|format(stock.beta) }}</div>
+            <div class="metric-label">Beta Coefficient</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {% if stock.beta > 1.2 %}Stock is more volatile than the market
+                {% elif stock.beta > 0.8 %}Stock is moderately correlated with the market
+                {% else %}Stock is less volatile than the market
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="metric-item">
+            <div class="metric-value {% if stock.max_gain > 0 %}positive{% else %}neutral{% endif %}">
+                {{ "%.2f"|format(stock.max_gain) }}%
+            </div>
+            <div class="metric-label">Maximum Gain</div>
+        </div>
+        
+        <div class="metric-item">
+            <div class="metric-value {% if stock.max_loss < 0 %}negative{% else %}neutral{% endif %}">
+                {{ "%.2f"|format(stock.max_loss) }}%
+            </div>
+            <div class="metric-label">Maximum Loss</div>
+        </div>
+        
+        <div class="metric-item">
+            <div class="metric-value text-gray-800">{{ "%.2f"|format(stock.risk_return_ratio) }}</div>
+            <div class="metric-label">Risk-Return Ratio</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {% if stock.risk_return_ratio > 1.5 %}Excellent
+                {% elif stock.risk_return_ratio > 1.0 %}Good
+                {% elif stock.risk_return_ratio > 0.5 %}Average
+                {% else %}Weak
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="metric-item">
+            <div class="metric-value">
+                <span class="cluster-badge cluster-{{ stock.cluster_id }}">
+                    Cluster {{ stock.cluster_id }}
+                </span>
+            </div>
+            <div class="metric-label">Investment Cluster</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {% if stock.cluster_id == 0 %}
+                <strong>Suitable for balanced investors</strong>. Moderate risk, balanced return.
+                {% elif stock.cluster_id == 1 %}
+                <strong>Suitable for conservative investors</strong>. Low risk, stable return.
+                {% elif stock.cluster_id == 2 %}
+                <strong>Suitable for aggressive investors</strong>. High risk, high potential.
+                {% else %}
+                <strong>Suitable for growth-oriented investors</strong>. Positive return potential.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grafik ve Analiz -->
+<div class="mx-auto max-w-7xl px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Fiyat Grafiği -->
+        <div class="lg:col-span-2">
+            <div class="analysis-card">
+                <h3>Fiyat Grafiği (Son 30 Gün)</h3>
+                <div class="chart-container">
+                    <canvas id="priceChart" 
+                        data-stock-code="{{ stock.code }}"
+                        data-base-price="{{ stock.avg_price }}"
+                        data-volatility="{{ stock.volatility }}"></canvas>
+                </div>
+                <div id="chartLoading" class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i> Grafik yükleniyor...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Analizi -->
+        <div>
+            <div class="analysis-card">
+                <h3>Risk Değerlendirmesi</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Volatilite Analizi</h4>
+                        <p class="text-sm text-gray-600">
+                            {% if stock.volatility > 4.5 %}
+                            This stock <strong>high volatility</strong> is being shown. It is suitable for high-risk investors.
+                            {% elif stock.volatility > 3.0 %}
+                            This stock <strong>moderate volatility</strong> is being shown. It is suitable for balanced investment portfolios.
+                            {% else %}
+                            This stock <strong>low volatility</strong> is being shown. It is ideal for conservative investors.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Beta Analizi</h4>
+                        <p class="text-sm text-gray-600">
+                            {% if stock.beta > 1.2 %}
+                            <strong>High beta</strong> ({{ "%.2f"|format(stock.beta) }}) coefficient value indicates that the stock is more volatile than the market by %{{ "%.0f"|format((stock.beta-1)*100) }} more.
+                            {% elif stock.beta > 0.8 %}
+                            <strong>Moderate beta</strong> ({{ "%.2f"|format(stock.beta) }}) coefficient value indicates that the stock is moderately correlated with the market.
+                            {% else %}
+                            <strong>Low beta</strong> ({{ "%.2f"|format(stock.beta) }}) coefficient value indicates that the stock is less volatile than the market.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Yatırımcı Profili</h4>
+                        <p class="text-sm text-gray-600">
+                            {% if stock.cluster_id == 0 %}
+                            <strong>Suitable for balanced investors</strong>. Moderate risk, balanced return.
+                            {% elif stock.cluster_id == 1 %}
+                            <strong>Suitable for conservative investors</strong>. Low risk, stable return.
+                            {% elif stock.cluster_id == 2 %}
+                            <strong>Suitable for aggressive investors</strong>. High risk, high potential.
+                            {% else %}
+                            <strong>Suitable for growth-oriented investors</strong>. Positive return potential.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aksiyon Butonları -->
+    <div class="analysis-card">
+        <h3>Yatırım Araçları</h3>
+        <div class="action-buttons">
+            <a href="{{ url_for('main.comparison_tool') }}?stock={{ stock.code }}" class="btn btn-primary">
+                <i class="fas fa-chart-bar"></i> Hisse Karşılaştır
+            </a>
+            <a href="{{ url_for('main.technical_analysis') }}?stock={{ stock.code }}" class="btn btn-secondary">
+                <i class="fas fa-chart-line"></i> Teknik Analiz
+            </a>
+            <a href="{{ url_for('main.portfolio_builder') }}?add={{ stock.code }}" class="btn btn-secondary">
+                <i class="fas fa-briefcase"></i> Portföye Ekle
+            </a>
+            <a href="{{ url_for('main.clusters') }}" class="btn btn-secondary">
+                <i class="fas fa-sitemap"></i> Küme Analizi
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartContainer = document.getElementById('priceChart');
+    const loadingDiv = document.getElementById('chartLoading');
+    
+    if (!chartContainer) return;
+    
+    // Template değişkenlerini data attributelerden al
+    const stockCode = chartContainer.dataset.stockCode;
+    const basePrice = parseFloat(chartContainer.dataset.basePrice);
+    const volatilityFactor = parseFloat(chartContainer.dataset.volatility) / 100;
+    
+    // Mock veri ile grafik oluştur (gerçek uygulamada API'den gelecek)
+    const mockData = {
+        dates: [],
+        prices: []
+    };
+    
+    // Son 30 günün mock verisi
+    const today = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        mockData.dates.push(date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }));
+        
+        // Volatiliteye göre rastgele fiyat değişimi
+        const randomChange = (Math.random() - 0.5) * 2 * volatilityFactor;
+        const price = basePrice * (1 + randomChange);
+        mockData.prices.push(price);
+    }
+    
+    // Grafik oluştur
+    try {
+        loadingDiv.style.display = 'none';
+        chartContainer.style.display = 'block';
+        
+        const ctx = chartContainer.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: mockData.dates,
+                datasets: [{
+                    label: 'Kapanış Fiyatı (₺)',
+                    data: mockData.prices,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: stockCode + ' Son 30 Gün Fiyat Grafiği',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: '#f3f4f6'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(2) + ' ₺';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Grafik oluşturulurken hata:', error);
+        loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Grafik yüklenirken hata oluştu';
+    }
+    
+    // API'den gerçek veri çekmek için (şu an devre dışı)
+    /*
+    fetch('/api/stocks/' + stockCode, {
+        headers: {
+            'Authorization': 'Bearer your_token_here'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('API yanıtı başarısız: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Gerçek veri ile grafik güncelle
+        console.log('API verisi:', data);
+    })
+    .catch(error => {
+        console.error('API hatası:', error);
+        // Mock veri ile devam et
+    });
+    */
+});
+</script>
+{% endblock %} 

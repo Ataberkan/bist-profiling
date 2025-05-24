@@ -1,0 +1,1153 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Portfolio Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .portfolio-header {
+        background: linear-gradient(to right, #1e3c72, #2a5298);
+        border-radius: 8px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .portfolio-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-left: 4px solid #2563eb;
+    }
+    
+    .portfolio-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .stock-card {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 1rem;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin: 1rem 0;
+    }
+    
+    .draggable {
+        cursor: move;
+    }
+    
+    .drop-zone {
+        min-height: 100px;
+        border: 2px dashed #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f9fafb;
+    }
+    
+    .drop-zone.highlight {
+        border-color: #2563eb;
+        background-color: rgba(37, 99, 235, 0.05);
+    }
+    
+    .selected-stock {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f3f4f6;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+    }
+    
+    .weight-input {
+        width: 60px;
+        text-align: center;
+    }
+    
+    .remove-stock {
+        color: #ef4444;
+        cursor: pointer;
+    }
+    
+    .allocation-chart {
+        padding: 1rem;
+        background-color: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .what-if-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .what-if-table th, 
+    .what-if-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .what-if-table th {
+        background-color: #f3f4f6;
+        font-weight: 500;
+    }
+    
+    .optimization-form {
+        background-color: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .metric-item:last-child {
+        border-bottom: none;
+    }
+    
+    .metric-value {
+        font-weight: 600;
+    }
+    
+    .positive {
+        color: #34A853;
+    }
+    
+    .negative {
+        color: #EA4335;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Portfolio Management</h2>
+    <p class="mt-2 text-sm text-gray-500">Son güncelleme: {{ update_date }}</p>
+</div>
+
+<!-- Portföy Yönetimi Açıklaması -->
+<div class="portfolio-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">Build and Analyze Your Portfolio</h3>
+    <p class="mb-4">With our portfolio management tool, you can create your own portfolio from BIST stocks, analyze risk-return balance, and optimize your portfolio.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Portfolio Creation</h4>
+            <p class="text-white/80">Create portfolios from BIST stocks and adjust weightings.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Risk Analysis</h4>
+            <p class="text-white/80">Review your portfolio's risk-return metrics.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Optimization</h4>
+            <p class="text-white/80">Optimize your portfolio according to your goals.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Ana İçerik - 2 sütunlu layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Sol Panel - Portföy Oluşturma -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Stock Selection</h3>
+            
+            <div class="mb-4">
+                <label for="stockSearch" class="block text-sm font-medium text-gray-700 mb-1">Stock Search:</label>
+                <input type="text" id="stockSearch" name="stockSearch" 
+                       class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary" 
+                       placeholder="Stock code or name...">
+            </div>
+            
+            <div id="stockSearchResults" class="mb-4 max-h-96 overflow-y-auto">
+                <!-- Arama sonuçları buraya gelecek -->
+                <div class="text-sm text-gray-500">Arama yapmak için en az 2 karakter girin...</div>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-gray-700 mb-2">Recommended Stocks</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <!-- Örnek Hisseler -->
+                    <div class="stock-card draggable" draggable="true" data-code="GARAN" data-name="Garanti Bankası">
+                        <div class="font-medium text-primary">GARAN</div>
+                        <div class="text-xs text-gray-500">Garanti Bankası</div>
+                    </div>
+                    <div class="stock-card draggable" draggable="true" data-code="ASELS" data-name="Aselsan">
+                        <div class="font-medium text-primary">ASELS</div>
+                        <div class="text-xs text-gray-500">Aselsan</div>
+                    </div>
+                    <div class="stock-card draggable" draggable="true" data-code="THYAO" data-name="Türk Hava Yolları">
+                        <div class="font-medium text-primary">THYAO</div>
+                        <div class="text-xs text-gray-500">Türk Hava Yolları</div>
+                    </div>
+                    <div class="stock-card draggable" draggable="true" data-code="EREGL" data-name="Ereğli Demir Çelik">
+                        <div class="font-medium text-primary">EREGL</div>
+                        <div class="text-xs text-gray-500">Ereğli Demir Çelik</div>
+                    </div>
+                    <div class="stock-card draggable" draggable="true" data-code="TUPRS" data-name="Tüpraş">
+                        <div class="font-medium text-primary">TUPRS</div>
+                        <div class="text-xs text-gray-500">Tüpraş</div>
+                    </div>
+                    <div class="stock-card draggable" draggable="true" data-code="KCHOL" data-name="Koç Holding">
+                        <div class="font-medium text-primary">KCHOL</div>
+                        <div class="text-xs text-gray-500">Koç Holding</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ready Portfolios</h3>
+            <div class="space-y-4">
+                <div class="text-center bg-blue-50 p-3 rounded-lg border border-blue-200 cursor-pointer portfolio-template" data-type="conservative">
+                    <span class="font-medium">Conservative Portfolio</span>
+                    <div class="text-xs text-gray-500">Low risk, stable return</div>
+                </div>
+                <div class="text-center bg-blue-50 p-3 rounded-lg border border-blue-200 cursor-pointer portfolio-template" data-type="balanced">
+                    <span class="font-medium">Balanced Portfolio</span>
+                    <div class="text-xs text-gray-500">Moderate risk, balanced return</div>
+                </div>
+                <div class="text-center bg-yellow-50 p-3 rounded-lg border border-yellow-200 cursor-pointer portfolio-template" data-type="growth">
+                    <span class="font-medium">Growth-Oriented Portfolio</span>
+                    <div class="text-xs text-gray-500">High risk, high return potential</div>
+                </div>
+                <div class="text-center bg-red-50 p-3 rounded-lg border border-red-200 cursor-pointer portfolio-template" data-type="aggressive">
+                    <span class="font-medium">Aggressive Portfolio</span>
+                    <div class="text-xs text-gray-500">Very high risk, maximum return target</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sağ Panel - Portföy Analizi -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Portfolio Builder</h3>
+            <p class="text-gray-500 mb-4">Drag and drop stocks to your portfolio, adjust weights, and analyze your portfolio.</p>
+            
+            <div class="drop-zone" id="portfolioDropZone">
+                <div id="emptyPortfolioMessage" class="text-center py-4 text-gray-400">
+                    <i class="fas fa-plus-circle text-2xl mb-2"></i>
+                    <p>Drag stocks here or select a ready portfolio</p>
+                </div>
+                <div id="selectedStocks" class="hidden">
+                    <!-- Seçilen hisseler buraya gelecek -->
+                </div>
+            </div>
+            
+            <div class="flex justify-end mb-4">
+                <button id="clearPortfolio" class="text-sm text-gray-500 mr-4 hover:text-gray-700">
+                    <i class="fas fa-trash-alt mr-1"></i> Clear Portfolio
+                </button>
+                <button id="analyzePortfolio" class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chart-line mr-1"></i> Analyze Portfolio
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="allocation-chart">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Distribution</h4>
+                    <div class="chart-container">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+                
+                <div id="riskMetrics" class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Risk Metrics</h4>
+                    <div class="space-y-2">
+                        <div class="metric-item">
+                            <span class="text-gray-600">Expected Return (Annual)</span>
+                            <span id="expectedReturn" class="metric-value">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="text-gray-600">Volatility (Annual)</span>
+                            <span id="volatility" class="metric-value">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="text-gray-600">Sharpe Ratio</span>
+                            <span id="sharpeRatio" class="metric-value">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="text-gray-600">Beta (BIST-100'e göre)</span>
+                            <span id="beta" class="metric-value">-</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="text-gray-600">Maximum Drawdown</span>
+                            <span id="maxDrawdown" class="metric-value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Portföy Optimizasyonu -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Portfolio Optimization</h3>
+            
+            <div class="optimization-form">
+                <h4 class="font-medium text-gray-700 mb-3">Optimization Target</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="flex items-center">
+                            <input type="radio" name="optimizationTarget" value="maxSharpe" class="mr-2" checked>
+                            <span>Maximum Sharpe Ratio</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Risk per unit of return</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center">
+                            <input type="radio" name="optimizationTarget" value="minRisk" class="mr-2">
+                            <span>Minimum Risk</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Lowest volatility</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center">
+                            <input type="radio" name="optimizationTarget" value="targetReturn" class="mr-2">
+                            <span>Target Return</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Minimum risk for a specified return</p>
+                    </div>
+                </div>
+                
+                <div id="targetReturnInput" class="mb-4 hidden">
+                    <label for="targetReturn" class="block text-sm font-medium text-gray-700 mb-1">Target Annual Return (%):</label>
+                    <input type="number" id="targetReturn" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary" min="0" max="100" step="0.1" value="15">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="maxWeightPerStock" class="block text-sm font-medium text-gray-700 mb-1">Maximum Stock Weight (%):</label>
+                    <input type="number" id="maxWeightPerStock" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary" min="1" max="100" step="1" value="30">
+                </div>
+                
+                <button id="optimizePortfolio" class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-magic mr-1"></i> Optimize Portfolio
+                </button>
+            </div>
+            
+            <div id="optimizationResults" class="hidden mt-4">
+                <h4 class="font-medium text-gray-700 mb-3">Optimization Results</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="allocation-chart">
+                        <h5 class="text-sm font-medium text-gray-600 mb-2">Optimized Distribution</h5>
+                        <div class="chart-container">
+                            <canvas id="optimizedAllocationChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-600 mb-2">Optimized Metrics</h5>
+                        <div class="space-y-2">
+                            <div class="metric-item">
+                                <span class="text-gray-600">Expected Return (Annual)</span>
+                                <span id="optimizedReturn" class="metric-value">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">Volatility (Annual)</span>
+                                <span id="optimizedVolatility" class="metric-value">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">Sharpe Ratio</span>
+                                <span id="optimizedSharpe" class="metric-value">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">Beta (BIST-100'e göre)</span>
+                                <span id="optimizedBeta" class="metric-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="applyOptimizedWeights" class="w-full bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                                Apply Optimized Weights
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- "Ne-Olsa" Senaryoları -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">"Ne-Olsa" Scenarios (What-If Analysis)</h3>
+            <p class="text-gray-500 mb-4">Analyze how your portfolio would perform under various market conditions.</p>
+            
+            <div class="mb-4">
+                <label for="scenarioSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Scenario:</label>
+                <select id="scenarioSelect" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="bullMarket">Bull Market (BIST-100 +20%)</option>
+                    <option value="bearMarket">Bear Market (BIST-100 -20%)</option>
+                    <option value="recession">Economic Recession</option>
+                    <option value="highInflation">High Inflation Environment</option>
+                    <option value="interestRateHike">Interest Rate Hike</option>
+                    <option value="sectorCrisis">Sector Crisis</option>
+                </select>
+            </div>
+            
+            <div id="whatIfResults" class="hidden">
+                <h4 class="font-medium text-gray-700 mb-3">Scenario Analysis Results</h4>
+                
+                <div class="overflow-x-auto mb-4">
+                    <table class="what-if-table">
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Normal Expected Return</th>
+                                <th>Scenario Return</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody id="whatIfTableBody">
+                            <!-- "Ne-Olsa" analiz sonuçları buraya eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-600 mb-2">Portfolio Impact</h5>
+                        <div class="space-y-2">
+                            <div class="metric-item">
+                                <span class="text-gray-600">Normal Expected Return</span>
+                                <span id="normalReturn" class="metric-value">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">Scenario Return</span>
+                                <span id="scenarioReturn" class="metric-value">-</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">Potential Loss/Gain</span>
+                                <span id="potentialImpact" class="metric-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="text-sm font-medium text-gray-600 mb-2">Recommendations</h5>
+                        <div id="recommendations" class="text-sm">
+                            <!-- Öneriler buraya eklenecek -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sürükle-bırak işlemleri
+    setupDragAndDrop();
+    
+    // Hazır portföy butonları
+    setupPredefinedPortfolios();
+    
+    // Form işlemleri
+    setupFormHandlers();
+    
+    // Demo grafikleri
+    setupDemoCharts();
+});
+
+// Sürükle-bırak işlemlerini kur
+function setupDragAndDrop() {
+    const draggables = document.querySelectorAll('.draggable');
+    const dropZone = document.getElementById('portfolioDropZone');
+    const selectedStocks = document.getElementById('selectedStocks');
+    const emptyMessage = document.getElementById('emptyPortfolioMessage');
+    
+    // Sürüklenebilir öğeler için olayları ekle
+    draggables.forEach(draggable => {
+        draggable.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                code: this.dataset.code,
+                name: this.dataset.name
+            }));
+            this.classList.add('opacity-50');
+        });
+        
+        draggable.addEventListener('dragend', function() {
+            this.classList.remove('opacity-50');
+        });
+    });
+    
+    // Bırakma bölgesi için olayları ekle
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('highlight');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        this.classList.remove('highlight');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('highlight');
+        
+        try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            addStockToPortfolio(data.code, data.name);
+        } catch (err) {
+            console.error('Sürüklenen veri işlenemedi:', err);
+        }
+    });
+    
+    // Portföye hisse ekle
+    function addStockToPortfolio(code, name) {
+        // Zaten ekli mi kontrol et
+        if (document.querySelector(`[data-stock-code="${code}"]`)) {
+            return;
+        }
+        
+        // Yeni hisse elementi oluştur
+        const stockElement = document.createElement('div');
+        stockElement.className = 'selected-stock';
+        stockElement.dataset.stockCode = code;
+        
+        stockElement.innerHTML = `
+            <div>
+                <span class="font-medium">${code}</span>
+                <span class="text-xs text-gray-500 ml-2">${name}</span>
+            </div>
+            <div class="flex items-center">
+                <div class="mr-2">
+                    <label class="text-xs text-gray-500 mr-1">Weight:</label>
+                    <input type="number" class="weight-input border border-gray-300 rounded" min="1" max="100" value="10">
+                    <span class="text-xs">%</span>
+                </div>
+                <button class="remove-stock">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Silme butonuna olay ekle
+        stockElement.querySelector('.remove-stock').addEventListener('click', function() {
+            stockElement.remove();
+            updatePortfolioDisplay();
+        });
+        
+        // Ağırlık değişimini dinle
+        stockElement.querySelector('.weight-input').addEventListener('change', function() {
+            updatePortfolioDisplay();
+        });
+        
+        // Portföye ekle
+        selectedStocks.appendChild(stockElement);
+        
+        // Portföy görünümünü güncelle
+        updatePortfolioDisplay();
+    }
+    
+    // Portföy görünümünü güncelle
+    function updatePortfolioDisplay() {
+        const stocks = selectedStocks.querySelectorAll('.selected-stock');
+        
+        if (stocks.length > 0) {
+            emptyMessage.classList.add('hidden');
+            selectedStocks.classList.remove('hidden');
+            document.getElementById('analyzePortfolio').disabled = false;
+        } else {
+            emptyMessage.classList.remove('hidden');
+            selectedStocks.classList.add('hidden');
+            document.getElementById('analyzePortfolio').disabled = true;
+            
+            // Analiz sonuçlarını temizle
+            resetAnalysisDisplay();
+        }
+    }
+}
+
+// Hazır portföyleri kur
+function setupPredefinedPortfolios() {
+    // Hazır portföy verileri
+    const portfolios = {
+        conservative: [
+            { code: 'TUPRS', name: 'Tüpraş', weight: 25 },
+            { code: 'GARAN', name: 'Garanti Bankası', weight: 25 },
+            { code: 'AKBNK', name: 'Akbank', weight: 20 },
+            { code: 'KCHOL', name: 'Koç Holding', weight: 20 },
+            { code: 'SISE', name: 'Şişecam', weight: 10 }
+        ],
+        balanced: [
+            { code: 'THYAO', name: 'Türk Hava Yolları', weight: 20 },
+            { code: 'ASELS', name: 'Aselsan', weight: 20 },
+            { code: 'GARAN', name: 'Garanti Bankası', weight: 20 },
+            { code: 'TUPRS', name: 'Tüpraş', weight: 20 },
+            { code: 'KCHOL', name: 'Koç Holding', weight: 20 }
+        ],
+        growth: [
+            { code: 'ASELS', name: 'Aselsan', weight: 30 },
+            { code: 'THYAO', name: 'Türk Hava Yolları', weight: 25 },
+            { code: 'EREGL', name: 'Ereğli Demir Çelik', weight: 25 },
+            { code: 'KCHOL', name: 'Koç Holding', weight: 20 }
+        ],
+        aggressive: [
+            { code: 'THYAO', name: 'Türk Hava Yolları', weight: 35 },
+            { code: 'ASELS', name: 'Aselsan', weight: 30 },
+            { code: 'KOZAA', name: 'Koza Altın', weight: 20 },
+            { code: 'YKBNK', name: 'Yapı Kredi Bankası', weight: 15 }
+        ]
+    };
+    
+    // Hazır portföy butonlarına olayları ekle
+    document.querySelectorAll('.portfolio-template').forEach(button => {
+        button.addEventListener('click', function() {
+            const type = this.dataset.type;
+            loadPredefinedPortfolio(portfolios[type]);
+        });
+    });
+    
+    // Hazır portföyü yükle
+    function loadPredefinedPortfolio(portfolio) {
+        // Mevcut portföyü temizle
+        clearPortfolio();
+        
+        // Yeni hisseleri ekle
+        const selectedStocks = document.getElementById('selectedStocks');
+        
+        portfolio.forEach(stock => {
+            const stockElement = document.createElement('div');
+            stockElement.className = 'selected-stock';
+            stockElement.dataset.stockCode = stock.code;
+            
+            stockElement.innerHTML = `
+                <div>
+                    <span class="font-medium">${stock.code}</span>
+                    <span class="text-xs text-gray-500 ml-2">${stock.name}</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="mr-2">
+                        <label class="text-xs text-gray-500 mr-1">Weight:</label>
+                        <input type="number" class="weight-input border border-gray-300 rounded" min="1" max="100" value="${stock.weight}">
+                        <span class="text-xs">%</span>
+                    </div>
+                    <button class="remove-stock">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Silme butonuna olay ekle
+            stockElement.querySelector('.remove-stock').addEventListener('click', function() {
+                stockElement.remove();
+                updatePortfolioDisplay();
+            });
+            
+            // Ağırlık değişimini dinle
+            stockElement.querySelector('.weight-input').addEventListener('change', function() {
+                updatePortfolioDisplay();
+            });
+            
+            // Portföye ekle
+            selectedStocks.appendChild(stockElement);
+        });
+        
+        // Portföy görünümünü güncelle
+        updatePortfolioDisplay();
+        
+        // Portföyü analiz et
+        analyzePortfolio();
+    }
+    
+    // Portföyü temizle
+    function clearPortfolio() {
+        const selectedStocks = document.getElementById('selectedStocks');
+        selectedStocks.innerHTML = '';
+        updatePortfolioDisplay();
+    }
+    
+    // Temizleme butonuna olay ekle
+    document.getElementById('clearPortfolio').addEventListener('click', clearPortfolio);
+}
+
+// Form olaylarını kur
+function setupFormHandlers() {
+    // Analiz butonu olayını ekle
+    document.getElementById('analyzePortfolio').addEventListener('click', analyzePortfolio);
+    
+    // Optimizasyon hedefi değişimini dinle
+    const optimizationTargets = document.querySelectorAll('input[name="optimizationTarget"]');
+    optimizationTargets.forEach(target => {
+        target.addEventListener('change', function() {
+            const targetReturnInput = document.getElementById('targetReturnInput');
+            if (this.value === 'targetReturn') {
+                targetReturnInput.classList.remove('hidden');
+            } else {
+                targetReturnInput.classList.add('hidden');
+            }
+        });
+    });
+    
+    // Optimizasyon butonu olayını ekle
+    document.getElementById('optimizePortfolio').addEventListener('click', optimizePortfolio);
+    
+    // Optimize ağırlıkları uygula butonu olayını ekle
+    document.getElementById('applyOptimizedWeights').addEventListener('click', applyOptimizedWeights);
+    
+    // Senaryo seçimi değişimini dinle
+    document.getElementById('scenarioSelect').addEventListener('change', analyzeWhatIfScenario);
+}
+
+// Portföy analizi
+function analyzePortfolio() {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    
+    if (selectedStocks.length === 0) {
+        return;
+    }
+    
+    // Dağılım grafiğini güncelle
+    updateAllocationChart();
+    
+    // Risk metriklerini hesapla (demo veriler)
+    displayRiskMetrics({
+        expectedReturn: 12.5,
+        volatility: 18.2,
+        sharpeRatio: 0.68,
+        beta: 1.15,
+        maxDrawdown: 24.3
+    });
+    
+    // Optimizasyon ve What-If sonuçlarını gizle
+    document.getElementById('optimizationResults').classList.add('hidden');
+    document.getElementById('whatIfResults').classList.add('hidden');
+}
+
+// Dağılım grafiğini güncelle
+function updateAllocationChart() {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    
+    // Grafik verisini hazırla
+    const labels = [];
+    const data = [];
+    const colors = [
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335', 
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335',
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335'
+    ];
+    
+    selectedStocks.forEach((stock, index) => {
+        const code = stock.dataset.stockCode;
+        const weight = parseInt(stock.querySelector('.weight-input').value);
+        
+        labels.push(code);
+        data.push(weight);
+    });
+    
+    // Mevcut grafiği temizle
+    if (window.allocationPieChart) {
+        window.allocationPieChart.destroy();
+    }
+    
+    // Yeni grafik oluştur
+    window.allocationPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            return `${label}: %${value}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Risk metriklerini göster
+function displayRiskMetrics(metrics) {
+    document.getElementById('expectedReturn').textContent = `%${metrics.expectedReturn.toFixed(2)}`;
+    document.getElementById('volatility').textContent = `%${metrics.volatility.toFixed(2)}`;
+    document.getElementById('sharpeRatio').textContent = metrics.sharpeRatio.toFixed(2);
+    document.getElementById('beta').textContent = metrics.beta.toFixed(2);
+    document.getElementById('maxDrawdown').textContent = `%${metrics.maxDrawdown.toFixed(2)}`;
+}
+
+// Portföy optimizasyonu
+function optimizePortfolio() {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    
+    if (selectedStocks.length < 2) {
+        alert('Optimizasyon için en az 2 hisse gereklidir.');
+        return;
+    }
+    
+    // Optimizasyon hedefini al
+    const optimizationTarget = document.querySelector('input[name="optimizationTarget"]:checked').value;
+    const maxWeightPerStock = parseInt(document.getElementById('maxWeightPerStock').value);
+    
+    // Hedef getiri (eğer seçildiyse)
+    let targetReturn = null;
+    if (optimizationTarget === 'targetReturn') {
+        targetReturn = parseFloat(document.getElementById('targetReturn').value);
+    }
+    
+    // Optimize edilmiş sonuçları göster (demo veriler)
+    displayOptimizationResults({
+        weights: [40, 25, 20, 15],
+        expectedReturn: 14.2,
+        volatility: 16.8,
+        sharpeRatio: 0.85,
+        beta: 1.05
+    });
+    
+    // Sonuçları göster
+    document.getElementById('optimizationResults').classList.remove('hidden');
+    
+    // Sayfa kaydırma
+    document.getElementById('optimizationResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Optimizasyon sonuçlarını göster
+function displayOptimizationResults(results) {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    const ctx = document.getElementById('optimizedAllocationChart').getContext('2d');
+    
+    // Grafik verisini hazırla
+    const labels = [];
+    const colors = [
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335', 
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335',
+        '#4285F4', '#34A853', '#FBBC05', '#EA4335'
+    ];
+    
+    selectedStocks.forEach((stock, index) => {
+        labels.push(stock.dataset.stockCode);
+    });
+    
+    // Mevcut grafiği temizle
+    if (window.optimizedPieChart) {
+        window.optimizedPieChart.destroy();
+    }
+    
+    // Yeni grafik oluştur
+    window.optimizedPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: results.weights,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            return `${label}: %${value}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Metrikleri güncelle
+    document.getElementById('optimizedReturn').textContent = `%${results.expectedReturn.toFixed(2)}`;
+    document.getElementById('optimizedVolatility').textContent = `%${results.volatility.toFixed(2)}`;
+    document.getElementById('optimizedSharpe').textContent = results.sharpeRatio.toFixed(2);
+    document.getElementById('optimizedBeta').textContent = results.beta.toFixed(2);
+}
+
+// Optimize edilmiş ağırlıkları uygula
+function applyOptimizedWeights() {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    const optimizedWeights = [40, 25, 20, 15]; // Demo veriler
+    
+    // Ağırlıkları güncelle
+    selectedStocks.forEach((stock, index) => {
+        if (index < optimizedWeights.length) {
+            stock.querySelector('.weight-input').value = optimizedWeights[index];
+        }
+    });
+    
+    // Portföyü analiz et
+    analyzePortfolio();
+    
+    // Optimizasyon sonuçlarını gizle
+    document.getElementById('optimizationResults').classList.add('hidden');
+}
+
+// What-If senaryo analizi
+function analyzeWhatIfScenario() {
+    const selectedStocks = document.querySelectorAll('.selected-stock');
+    
+    if (selectedStocks.length === 0) {
+        return;
+    }
+    
+    const scenario = document.getElementById('scenarioSelect').value;
+    
+    // Demo senaryosu verileri hazırla
+    const stockResults = [];
+    selectedStocks.forEach((stock) => {
+        const code = stock.dataset.stockCode;
+        const normalReturn = (Math.random() * 20 - 5).toFixed(2);
+        let scenarioReturn;
+        
+        switch (scenario) {
+            case 'bullMarket':
+                scenarioReturn = (parseFloat(normalReturn) + Math.random() * 15).toFixed(2);
+                break;
+            case 'bearMarket':
+                scenarioReturn = (parseFloat(normalReturn) - Math.random() * 15).toFixed(2);
+                break;
+            case 'recession':
+                scenarioReturn = (parseFloat(normalReturn) - Math.random() * 20).toFixed(2);
+                break;
+            case 'highInflation':
+                scenarioReturn = (parseFloat(normalReturn) - Math.random() * 10).toFixed(2);
+                break;
+            case 'interestRateHike':
+                scenarioReturn = (parseFloat(normalReturn) - Math.random() * 8).toFixed(2);
+                break;
+            case 'sectorCrisis':
+                scenarioReturn = (parseFloat(normalReturn) - Math.random() * 25).toFixed(2);
+                break;
+            default:
+                scenarioReturn = normalReturn;
+        }
+        
+        const difference = (parseFloat(scenarioReturn) - parseFloat(normalReturn)).toFixed(2);
+        
+        stockResults.push({
+            code,
+            normalReturn,
+            scenarioReturn,
+            difference
+        });
+    });
+    
+    // Tablo gövdesini oluştur
+    const tableBody = document.getElementById('whatIfTableBody');
+    tableBody.innerHTML = '';
+    
+    stockResults.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${result.code}</td>
+            <td>%${result.normalReturn}</td>
+            <td class="${parseFloat(result.scenarioReturn) >= 0 ? 'text-green-600' : 'text-red-600'}">%${result.scenarioReturn}</td>
+            <td class="${parseFloat(result.difference) >= 0 ? 'text-green-600' : 'text-red-600'}">${parseFloat(result.difference) >= 0 ? '+' : ''}%${result.difference}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+    
+    // Portföy etkisini hesapla
+    const normalPortfolioReturn = 12.5; // Demo veri
+    let scenarioPortfolioReturn;
+    
+    switch (scenario) {
+        case 'bullMarket':
+            scenarioPortfolioReturn = 18.7;
+            break;
+        case 'bearMarket':
+            scenarioPortfolioReturn = 2.3;
+            break;
+        case 'recession':
+            scenarioPortfolioReturn = -5.8;
+            break;
+        case 'highInflation':
+            scenarioPortfolioReturn = 6.2;
+            break;
+        case 'interestRateHike':
+            scenarioPortfolioReturn = 8.1;
+            break;
+        case 'sectorCrisis':
+            scenarioPortfolioReturn = -12.4;
+            break;
+        default:
+            scenarioPortfolioReturn = normalPortfolioReturn;
+    }
+    
+    const impact = (scenarioPortfolioReturn - normalPortfolioReturn).toFixed(2);
+    
+    // Etki metriklerini güncelle
+    document.getElementById('normalReturn').textContent = `%${normalPortfolioReturn.toFixed(2)}`;
+    document.getElementById('scenarioReturn').textContent = `%${scenarioPortfolioReturn.toFixed(2)}`;
+    document.getElementById('potentialImpact').textContent = `${parseFloat(impact) >= 0 ? '+' : ''}%${impact}`;
+    
+    // Önerileri güncelle
+    updateRecommendations(scenario, parseFloat(impact));
+    
+    // Sonuçları göster
+    document.getElementById('whatIfResults').classList.remove('hidden');
+    
+    // Sayfa kaydırma
+    document.getElementById('whatIfResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Senaryo önerilerini güncelle
+function updateRecommendations(scenario, impact) {
+    const recommendations = document.getElementById('recommendations');
+    let recommendationText = '';
+    
+    if (impact < 0) {
+        switch (scenario) {
+            case 'bullMarket':
+                recommendationText = `
+                    <p class="mb-2">You are not fully benefiting from the rising market. Here are some things you can do:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Increase weight to higher beta stocks</li>
+                        <li>Invest in cyclical sectors (technology, industry)</li>
+                        <li>Consider leveraged BYF's</li>
+                    </ul>
+                `;
+                break;
+            case 'bearMarket':
+                recommendationText = `
+                    <p class="mb-2">Your portfolio is negatively impacted by the falling market. Here are some things you can do:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Invest in defensive sectors (health, public services)</li>
+                        <li>Increase dividend yield stocks</li>
+                        <li>Strengthen your cash position</li>
+                    </ul>
+                `;
+                break;
+            case 'recession':
+                recommendationText = `
+                    <p class="mb-2">Your portfolio is weak in a recession. Here are some things you can do:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Focus on basic consumption and health sectors</li>
+                        <li>Invest in low debt companies</li>
+                        <li>Allocate cash to gold and government bonds</li>
+                    </ul>
+                `;
+                break;
+            case 'highInflation':
+                recommendationText = `
+                    <p class="mb-2">Here are some things you can do to protect yourself in an inflationary environment:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Invest in commodity and energy companies</li>
+                        <li>Allocate weight to the real estate sector</li>
+                        <li>Consider indexed government bonds</li>
+                    </ul>
+                `;
+                break;
+            case 'interestRateHike':
+                recommendationText = `
+                    <p class="mb-2">Here are some things you can do to protect your portfolio in a rising interest rate environment:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Increase financial sector stocks</li>
+                        <li>Invest in value stocks</li>
+                        <li>Consider low debt companies</li>
+                    </ul>
+                `;
+                break;
+            case 'sectorCrisis':
+                recommendationText = `
+                    <p class="mb-2">Here are some things you can do to be resilient against sector crises:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Diversify your portfolio across different sectors</li>
+                        <li>Apply a maximum %20 weight rule in one sector</li>
+                        <li>Use ETF's for diversification</li>
+                    </ul>
+                `;
+                break;
+        }
+    } else {
+        recommendationText = `
+            <p class="mb-2">Your portfolio is performing positively in this scenario. You can maintain your current balance.</p>
+            <p>Additional recommendations:</p>
+            <ul class="list-disc pl-4 space-y-1">
+                <li>Occasionally realize gains</li>
+                <li>Set stop-loss levels</li>
+                <li>Review your risk management strategy</li>
+            </ul>
+        `;
+    }
+    
+    recommendations.innerHTML = recommendationText;
+}
+
+// Analiz görüntüsünü sıfırla
+function resetAnalysisDisplay() {
+    // Grafiği temizle
+    if (window.allocationPieChart) {
+        window.allocationPieChart.destroy();
+        window.allocationPieChart = null;
+    }
+    
+    // Risk metriklerini sıfırla
+    document.getElementById('expectedReturn').textContent = '-';
+    document.getElementById('volatility').textContent = '-';
+    document.getElementById('sharpeRatio').textContent = '-';
+    document.getElementById('beta').textContent = '-';
+    document.getElementById('maxDrawdown').textContent = '-';
+    
+    // Diğer sonuçları gizle
+    document.getElementById('optimizationResults').classList.add('hidden');
+    document.getElementById('whatIfResults').classList.add('hidden');
+}
+
+// Demo grafikleri oluştur (sayfa ilk yüklendiğinde)
+function setupDemoCharts() {
+    // Boş allocation chart
+    const allocCtx = document.getElementById('allocationChart').getContext('2d');
+    window.allocationPieChart = new Chart(allocCtx, {
+        type: 'pie',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %} 

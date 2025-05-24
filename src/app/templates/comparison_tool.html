@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Comparison Tool{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comparison-header {
+        background: linear-gradient(to right, #1d4ed8, #3b82f6);
+        border-radius: 8px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .comparison-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .comparison-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .positive {
+        color: #34A853;
+    }
+    
+    .negative {
+        color: #EA4335;
+    }
+    
+    .neutral {
+        color: #FBBC05;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .comparison-table th, .comparison-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .comparison-table th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        position: sticky;
+        left: 0;
+        z-index: 10;
+    }
+    
+    .comparison-table tr:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .chart-container {
+        height: 300px;
+        width: 100%;
+        position: relative;
+    }
+    
+    .metric-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .correlation-cell {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 500;
+    }
+    
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .cluster-1 {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .cluster-2 {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .cluster-3 {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .cluster-4 {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .checkbox-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+    
+    .selected-item {
+        background-color: #dbeafe;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    .indicator-value.high {
+        color: #ef4444;
+    }
+    
+    .indicator-value.medium {
+        color: #f59e0b;
+    }
+    
+    .indicator-value.low {
+        color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Comparison Tool</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Karşılaştırma Aracı Açıklaması -->
+<div class="comparison-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">Multi-Comparison Tool</h3>
+    <p class="mb-4">Compare stocks, sectors, and risk profiles within BIST to support your investment decisions.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Stock Comparison</h4>
+            <p class="text-white/80">Compare fundamental and technical data of different stocks.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Sector Comparison</h4>
+            <p class="text-white/80">Analyze performance and valuation metrics of sectors.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Risk Profile Comparison</h4>
+            <p class="text-white/80">Compare stock groups with different risk profiles.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Ana İçerik -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Yan Panel - Karşılaştırma Seçenekleri -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Comparison Type</h3>
+            
+            <div class="mb-4">
+                <label for="comparisonType" class="block text-sm font-medium text-gray-700 mb-1">Comparison:</label>
+                <select id="comparisonType" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="stocks">Stock Comparison</option>
+                    <option value="sectors">Sector Comparison</option>
+                    <option value="clusters">Risk Profile Comparison</option>
+                </select>
+            </div>
+            
+            <div class="mb-4" id="stockSelectionContainer">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stocks:</label>
+                <div class="checkbox-list">
+                    {% for stock in stocks %}
+                    <div class="flex items-center p-2 {% if loop.index <= 3 %}selected-item{% endif %}">
+                        <input type="checkbox" id="stock-{{ stock.code }}" class="stock-checkbox mr-2" {% if loop.index <= 3 %}checked{% endif %}>
+                        <label for="stock-{{ stock.code }}" class="text-sm font-medium text-gray-700">{{ stock.code }} - {{ stock.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-4 hidden" id="sectorSelectionContainer">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sectors:</label>
+                <div class="checkbox-list">
+                    {% for sector in sectors %}
+                    <div class="flex items-center p-2">
+                        <input type="checkbox" id="sector-{{ sector.name }}" class="sector-checkbox mr-2">
+                        <label for="sector-{{ sector.name }}" class="text-sm font-medium text-gray-700">{{ sector.name }} ({{ sector.stock_count }})</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-4 hidden" id="clusterSelectionContainer">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Risk Profiles:</label>
+                <div class="checkbox-list">
+                    {% for cluster in risk_clusters %}
+                    <div class="flex items-center p-2">
+                        <input type="checkbox" id="cluster-{{ cluster.id }}" class="cluster-checkbox mr-2">
+                        <label for="cluster-{{ cluster.id }}" class="text-sm font-medium text-gray-700">
+                            <span class="cluster-badge cluster-{{ cluster.id }} mr-1">{{ cluster.id }}</span>
+                            {{ cluster.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="metricGroup" class="block text-sm font-medium text-gray-700 mb-1">Metric Group:</label>
+                <select id="metricGroup" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="fundamentals">Fundamental Values</option>
+                    <option value="technicals">Technical Indicators</option>
+                    <option value="performance">Performance</option>
+                    <option value="risk">Risk Metrics</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Görünüm Seçenekleri</h3>
+            
+            <div class="mb-4">
+                <label for="chartType" class="block text-sm font-medium text-gray-700 mb-1">Görünüm Tipi:</label>
+                <select id="chartType" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="table">Tablo</option>
+                    <option value="radar">Radar Grafik</option>
+                    <option value="bar">Çubuk Grafik</option>
+                    <option value="heatmap">Isı Haritası</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="normalizeData" class="flex items-center text-sm font-medium text-gray-700">
+                    <input type="checkbox" id="normalizeData" class="mr-2">
+                    Verileri Normalize Et
+                </label>
+                <p class="text-xs text-gray-500 mt-1">Farklı ölçeklerdeki verileri karşılaştırılabilir hale getirir.</p>
+            </div>
+            
+            <div class="mb-4">
+                <button id="compareBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Karşılaştır
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ana İçerik -->
+    <div class="lg:col-span-3">
+        <!-- Stock Comparison -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Stock Comparison Table</h3>
+            
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>GARAN</th>
+                            <th>THYAO</th>
+                            <th>KCHOL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Sector</th>
+                            <td>Banking</td>
+                            <td>Transportation</td>
+                            <td>Holding</td>
+                        </tr>
+                        <tr>
+                            <th>Price</th>
+                            <td>24.82 TL</td>
+                            <td>294.60 TL</td>
+                            <td>142.90 TL</td>
+                        </tr>
+                        <tr>
+                            <th>Change</th>
+                            <td class="positive">%1.72</td>
+                            <td class="positive">%1.90</td>
+                            <td class="positive">%1.50</td>
+                        </tr>
+                        <tr>
+                            <th>P/E Ratio</th>
+                            <td>6.80</td>
+                            <td>4.20</td>
+                            <td>8.40</td>
+                        </tr>
+                        <tr>
+                            <th>P/B Ratio</th>
+                            <td>0.95</td>
+                            <td>1.45</td>
+                            <td>1.25</td>
+                        </tr>
+                        <tr>
+                            <th>Market Cap</th>
+                            <td>104.2 billion TL</td>
+                            <td>406.5 billion TL</td>
+                            <td>362.3 billion TL</td>
+                        </tr>
+                        <tr>
+                            <th>Dividend Yield</th>
+                            <td>%2.10</td>
+                            <td>%0.00</td>
+                            <td>%1.80</td>
+                        </tr>
+                        <tr>
+                            <th>ROE</th>
+                            <td>%18.50</td>
+                            <td>%34.60</td>
+                            <td>%15.20</td>
+                        </tr>
+                        <tr>
+                            <th>Beta</th>
+                            <td>1.10</td>
+                            <td>1.40</td>
+                            <td>0.90</td>
+                        </tr>
+                        <tr>
+                            <th>Volatility</th>
+                            <td>%3.80</td>
+                            <td>%5.60</td>
+                            <td>%2.90</td>
+                        </tr>
+                        <tr>
+                            <th>Annual Return</th>
+                            <td class="positive">%42.30</td>
+                            <td class="positive">%67.50</td>
+                            <td class="positive">%29.80</td>
+                        </tr>
+                        <tr>
+                            <th>Risk Profile</th>
+                            <td><span class="cluster-badge cluster-2">2</span> Balanced</td>
+                            <td><span class="cluster-badge cluster-1">1</span> Aggressive</td>
+                            <td><span class="cluster-badge cluster-2">2</span> Balanced</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Multi-Metric Comparison Chart -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Multi-Metric Comparison</h3>
+            
+            <div class="chart-container">
+                <!-- Canvas yerine bir placeholder gösterelim, gerçek uygulamada burada grafik olacak -->
+                <div class="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                    <p class="text-gray-400">Loading radar chart...</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mt-4">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                    <span class="text-sm font-medium">GARAN</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                    <span class="text-sm font-medium">THYAO</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                    <span class="text-sm font-medium">KCHOL</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teknik Göstergeler Karşılaştırması -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Teknik Göstergeler Karşılaştırması</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for i in range(3) %}
+                <div class="metric-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">RSI (14)</div>
+                    <div class="metric-value indicator-value {% if technical_indicators.rsi[i] > 70 %}high{% elif technical_indicators.rsi[i] < 30 %}low{% else %}medium{% endif %}">{{ technical_indicators.rsi[i] }}</div>
+                    <div class="text-xs font-medium text-gray-500 mt-1">{{ technical_indicators.stocks[i] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {% for i in range(3) %}
+                <div class="metric-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">MACD</div>
+                    <div class="metric-value indicator-value {% if technical_indicators.macd[i] > 0.5 %}high{% elif technical_indicators.macd[i] < 0 %}low{% else %}medium{% endif %}">{{ technical_indicators.macd[i] }}</div>
+                    <div class="text-xs font-medium text-gray-500 mt-1">{{ technical_indicators.stocks[i] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {% for i in range(3) %}
+                <div class="metric-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Stokastik</div>
+                    <div class="metric-value indicator-value {% if technical_indicators.stochastic[i] > 80 %}high{% elif technical_indicators.stochastic[i] < 20 %}low{% else %}medium{% endif %}">{{ technical_indicators.stochastic[i] }}</div>
+                    <div class="text-xs font-medium text-gray-500 mt-1">{{ technical_indicators.stocks[i] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Correlation Matrix -->
+        <div class="comparison-result-item">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Correlation Matrix</h3>
+            <div class="comparison-chart">
+                <canvas id="correlationMatrix" width="600" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde çalışacak kodlar
+    console.log('Comparison tool page loaded');
+    
+    // Karşılaştırma tipi değişim olayı
+    document.getElementById('comparisonType').addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        // Tüm seçim konteynerlerini gizle
+        document.getElementById('stockSelectionContainer').classList.add('hidden');
+        document.getElementById('sectorSelectionContainer').classList.add('hidden');
+        document.getElementById('clusterSelectionContainer').classList.add('hidden');
+        
+        // Seçilen türe göre ilgili konteyneri göster
+        if (selectedType === 'stocks') {
+            document.getElementById('stockSelectionContainer').classList.remove('hidden');
+        } else if (selectedType === 'sectors') {
+            document.getElementById('sectorSelectionContainer').classList.remove('hidden');
+        } else if (selectedType === 'clusters') {
+            document.getElementById('clusterSelectionContainer').classList.remove('hidden');
+        }
+    });
+    
+    // Metrik grubu değişim olayı
+    document.getElementById('metricGroup').addEventListener('change', function() {
+        // Gerçek uygulamada burada metrik grubuna göre görünümü güncelleyecek kodlar olacak
+        console.log('Metrik grubu değiştirildi:', this.value);
+    });
+    
+    // Görünüm tipi değişim olayı
+    document.getElementById('chartType').addEventListener('change', function() {
+        // Gerçek uygulamada burada görünüm tipini değiştirecek kodlar olacak
+        console.log('Görünüm tipi değiştirildi:', this.value);
+    });
+    
+    // Normalleştirme seçeneği değişim olayı
+    document.getElementById('normalizeData').addEventListener('change', function() {
+        // Gerçek uygulamada burada veri normalleştirme işlemi yapılacak
+        console.log('Veri normalleştirme:', this.checked);
+    });
+    
+    // Karşılaştır butonu tıklama olayı
+    document.getElementById('compareBtn').addEventListener('click', function() {
+        // Gerçek uygulamada burada seçilen verilere göre karşılaştırma yapılacak
+        console.log('Karşılaştırma yapılıyor...');
+    });
+});
+</script>
+{% endblock %} 

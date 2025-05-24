@@ -1,0 +1,724 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | My Account{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(to right, var(--secondary-700), var(--secondary-600));
+        border-radius: 12px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-card {
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-primary);
+        background-color: var(--bg-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .profile-image {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .positive {
+        color: var(--positive-color);
+        font-weight: 600;
+    }
+    
+    .negative {
+        color: var(--negative-color);
+        font-weight: 600;
+    }
+    
+    .neutral {
+        color: var(--warning-600);
+        font-weight: 600;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+    }
+    
+    .profile-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .profile-table th, .profile-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .profile-table th {
+        background-color: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .profile-table tr:hover {
+        background-color: var(--bg-secondary);
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-premium {
+        background-color: rgba(147, 51, 234, 0.15);
+        color: #7c2d12;
+        border: 1px solid rgba(147, 51, 234, 0.3);
+    }
+    
+    .badge-standard {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .badge-free {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .notification-item {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+        background-color: var(--bg-secondary);
+        border-left: 4px solid var(--border-secondary);
+        transition: all 0.3s ease;
+    }
+    
+    .notification-item:hover {
+        background-color: var(--bg-tertiary);
+    }
+    
+    .notification-item.unread {
+        background-color: var(--primary-50);
+        border-left-color: var(--primary-600);
+    }
+    
+    .notification-item.price_alert {
+        border-left-color: var(--warning-600);
+    }
+    
+    .notification-item.news {
+        border-left-color: var(--success-600);
+    }
+    
+    .notification-item.analysis {
+        border-left-color: var(--cluster-5);
+    }
+    
+    .notification-item.system {
+        border-left-color: var(--secondary-500);
+    }
+    
+    .notification-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .notification-message {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .notification-date {
+        color: var(--text-tertiary);
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .tab-nav {
+        display: flex;
+        border-bottom: 1px solid var(--border-primary);
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    
+    .tab-nav::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-nav-item {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+    
+    .tab-nav-item:hover {
+        color: var(--text-secondary);
+    }
+    
+    .tab-nav-item.active {
+        color: var(--primary-600);
+        border-bottom-color: var(--primary-600);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .settings-group {
+        margin-bottom: 2rem;
+    }
+    
+    .settings-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+    
+    .settings-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .settings-item-label {
+        color: var(--text-secondary);
+    }
+    
+    .pie-chart {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: conic-gradient(
+            var(--primary-500) 0% 32.5%,
+            var(--danger-500) 32.5% 71.1%,
+            var(--success-500) 71.1% 100%
+        );
+        margin: 0 auto 1rem;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .pie-legend {
+        margin-top: 1rem;
+    }
+    
+    .pie-legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .pie-legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+    }
+    
+    .risk-question {
+        margin-bottom: 1.5rem;
+    }
+    
+    .risk-question-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.75rem;
+    }
+    
+    .risk-option {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .risk-option:hover {
+        background-color: #f9fafb;
+    }
+    
+    .risk-option.selected {
+        border-color: #4f46e5;
+        background-color: #eff6ff;
+    }
+    
+    .risk-option-radio {
+        margin-right: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .risk-option-text {
+        color: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">My Account</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Profil Başlığı -->
+<div class="profile-header mb-8">
+    <div class="flex items-center">
+        <img src="{{ user.profile_image }}" alt="{{ user.username }}" class="profile-image mr-6">
+        <div>
+            <h3 class="text-2xl font-bold mb-2">{{ user.full_name }}</h3>
+            <p class="text-white/80 mb-1">{{ user.email }}</p>
+            <div class="flex items-center mt-2">
+                <span class="badge badge-premium mr-2">{{ user.subscription_type }}</span>
+                <span class="text-white/70 text-sm">Üyelik bitiş: {{ user.subscription_expires }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sekme Navigasyonu -->
+<div class="tab-nav">
+    <div class="tab-nav-item active" data-tab="portfolio">Portfolio</div>
+    <div class="tab-nav-item" data-tab="watchlist">Watchlist</div>
+    <div class="tab-nav-item" data-tab="notifications">Notifications</div>
+    <div class="tab-nav-item" data-tab="settings">Account Settings</div>
+    <div class="tab-nav-item" data-tab="risk-profile">Risk Profile</div>
+</div>
+
+<!-- Portföy Sekmesi -->
+<div class="tab-content active" id="tab-portfolio">
+    <div class="profile-card mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Portfolio Summary</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Total Value</div>
+                <div class="text-xl font-bold text-gray-900">38,572.00 TL</div>
+                <div class="text-sm text-green-600 mt-1">+2,782.00 TL (+7.77%)</div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Daily Change</div>
+                <div class="text-xl font-bold text-gray-900">+472.80 TL</div>
+                <div class="text-sm text-green-600 mt-1">+1.24%</div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Total Position</div>
+                <div class="text-xl font-bold text-gray-900">3 Stocks</div>
+                <div class="text-sm text-gray-500 mt-1">Last purchase: 15.07.2023</div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="md:col-span-3">
+                <div class="table-container">
+                    <table class="profile-table">
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Quantity</th>
+                                <th>Purchase Price</th>
+                                <th>Current Price</th>
+                                <th>Total Value</th>
+                                <th>P&L</th>
+                                <th>Change %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in portfolio %}
+                            <tr>
+                                <td class="font-medium">{{ item.code }} - {{ item.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.buy_price }} TL</td>
+                                <td>{{ item.current_price }} TL</td>
+                                <td>{{ item.total_value }} TL</td>
+                                <td class="{% if item.profit_loss > 0 %}positive{% elif item.profit_loss < 0 %}negative{% else %}neutral{% endif %}">
+                                    {{ item.profit_loss }} TL
+                                </td>
+                                <td class="{% if item.profit_loss_percent > 0 %}positive{% elif item.profit_loss_percent < 0 %}negative{% else %}neutral{% endif %}">
+                                    {{ item.profit_loss_percent }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div>
+                <div class="text-sm font-medium text-gray-700 mb-2">Portfolio Distribution</div>
+                <div class="pie-chart mx-auto"></div>
+                <div class="pie-legend">
+                    <div class="pie-legend-item">
+                        <div class="pie-legend-color" style="background-color: #3b82f6;"></div>
+                        <div class="text-sm">GARAN (32.5%)</div>
+                    </div>
+                    <div class="pie-legend-item">
+                        <div class="pie-legend-color" style="background-color: #ef4444;"></div>
+                        <div class="text-sm">THYAO (38.6%)</div>
+                    </div>
+                    <div class="pie-legend-item">
+                        <div class="pie-legend-color" style="background-color: #10b981;"></div>
+                        <div class="text-sm">KCHOL (29.9%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-end mt-6">
+            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded mr-2">
+                <i class="fas fa-plus mr-1"></i> Add New Purchase
+            </button>
+            <button class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded">
+                <i class="fas fa-file-export mr-1"></i> Download Report
+            </button>
+        </div>
+    </div>
+    
+    <div class="profile-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Portfolio Performance</h3>
+        <div class="h-64 w-full bg-gray-100 rounded-lg flex items-center justify-center">
+            <p class="text-gray-500">Portfolio performance chart will be displayed here</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Weekly</div>
+                <div class="text-lg font-bold text-green-600">+2.5%</div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Monthly</div>
+                <div class="text-lg font-bold text-green-600">+4.8%</div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">3 Months</div>
+                <div class="text-lg font-bold text-green-600">+10.2%</div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="text-sm text-gray-500 mb-1">Annual</div>
+                <div class="text-lg font-bold text-green-600">+32.6%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- İzleme Listesi Sekmesi -->
+<div class="tab-content" id="tab-watchlist">
+    <div class="profile-card">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">My Watchlist</h3>
+            <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                <i class="fas fa-plus mr-1"></i> Add Stock
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <table class="profile-table">
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Change</th>
+                        <th>Date Added</th>
+                        <th>Target Price</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in watchlist %}
+                    <tr>
+                        <td class="font-medium">{{ item.code }} - {{ item.name }}</td>
+                        <td>{{ item.price }} TL</td>
+                        <td class="{% if item.change > 0 %}positive{% elif item.change < 0 %}negative{% else %}neutral{% endif %}">
+                            {{ item.change }}%
+                        </td>
+                        <td>{{ item.added_date }}</td>
+                        <td>{{ item.price_target }} TL</td>
+                        <td>{{ item.notes }}</td>
+                        <td class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-800">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bildirimler Sekmesi -->
+<div class="tab-content" id="tab-notifications">
+    <div class="profile-card">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">My Notifications</h3>
+            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                Mark All as Read
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            {% for notification in notifications %}
+            <div class="notification-item {{ notification.type }} {% if not notification.is_read %}unread{% endif %}">
+                <div class="notification-title">{{ notification.title }}</div>
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-date">{{ notification.date }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Hesap Ayarları Sekmesi -->
+<div class="tab-content" id="tab-settings">
+    <div class="profile-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <div class="settings-group">
+                    <h4 class="settings-title">Profile Information</h4>
+                    
+                    <div class="mb-4">
+                        <label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="fullName" class="w-full border border-gray-300 rounded-md shadow-sm p-2" value="{{ user.full_name }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" class="w-full border border-gray-300 rounded-md shadow-sm p-2" value="{{ user.email }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="username" class="w-full border border-gray-300 rounded-md shadow-sm p-2" value="{{ user.username }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="password" class="w-full border border-gray-300 rounded-md shadow-sm p-2" value="********">
+                    </div>
+                    
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                        Update Profile
+                    </button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="settings-group">
+                    <h4 class="settings-title">Notification Settings</h4>
+                    
+                    {% for key, value in settings.notification_preferences.items() %}
+                    <div class="settings-item">
+                        <div class="settings-item-label">
+                            {% if key == 'email_alerts' %}
+                                Email Alerts
+                            {% elif key == 'browser_notifications' %}
+                                Browser Notifications
+                            {% elif key == 'price_alerts' %}
+                                Price Alerts
+                            {% elif key == 'news_alerts' %}
+                                News Alerts
+                            {% elif key == 'analysis_alerts' %}
+                                Analysis Alerts
+                            {% endif %}
+                        </div>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" class="rounded text-indigo-600" {% if value %}checked{% endif %}>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="settings-group">
+                    <h4 class="settings-title">Display Settings</h4>
+                    
+                    <div class="settings-item">
+                        <div class="settings-item-label">Dark Mode</div>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" class="rounded text-indigo-600" {% if settings.display_preferences.dark_mode %}checked{% endif %}>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <div class="settings-item-label">Default Currency</div>
+                        <select class="border border-gray-300 rounded-md shadow-sm p-1">
+                            <option value="TRY" {% if settings.display_preferences.default_currency == 'TRY' %}selected{% endif %}>TRY</option>
+                            <option value="USD" {% if settings.display_preferences.default_currency == 'USD' %}selected{% endif %}>USD</option>
+                            <option value="EUR" {% if settings.display_preferences.default_currency == 'EUR' %}selected{% endif %}>EUR</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <div class="settings-item-label">Default View</div>
+                        <select class="border border-gray-300 rounded-md shadow-sm p-1">
+                            <option value="table" {% if settings.display_preferences.default_view == 'table' %}selected{% endif %}>Table</option>
+                            <option value="cards" {% if settings.display_preferences.default_view == 'cards' %}selected{% endif %}>Cards</option>
+                            <option value="grid" {% if settings.display_preferences.default_view == 'grid' %}selected{% endif %}>Grid</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h4 class="settings-title">Privacy Settings</h4>
+                    
+                    {% for key, value in settings.privacy_settings.items() %}
+                    <div class="settings-item">
+                        <div class="settings-item-label">
+                            {% if key == 'profile_public' %}
+                                Make Profile Public
+                            {% elif key == 'share_portfolio' %}
+                                Share Portfolio
+                            {% elif key == 'show_real_returns' %}
+                                Show Real Returns
+                            {% endif %}
+                        </div>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" class="rounded text-indigo-600" {% if value %}checked{% endif %}>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded mt-4">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Profili Sekmesi -->
+<div class="tab-content" id="tab-risk-profile">
+    <div class="profile-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Risk Profile Test</h3>
+        <p class="text-gray-600 mb-6">To determine your investment risk profile, please answer the following questions. These will be used for personalized investment recommendations.</p>
+        
+        <form id="riskProfileForm">
+            {% for question in risk_profile_questions %}
+            <div class="risk-question">
+                <div class="risk-question-title">{{ loop.index }}. {{ question.question }}</div>
+                
+                <div class="space-y-2">
+                    {% for option in question.options %}
+                    <div class="risk-option" data-value="{{ option.value }}">
+                        <input type="radio" name="question{{ question.id }}" value="{{ option.value }}" id="q{{ question.id }}_o{{ option.id }}" class="risk-option-radio">
+                        <label for="q{{ question.id }}_o{{ option.id }}" class="risk-option-text">{{ option.text }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="mt-6">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Calculate Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde çalışacak kodlar
+    console.log('Kullanıcı profil sayfası yüklendi');
+    
+    // Sekme değiştirme işlemleri
+    const tabNavItems = document.querySelectorAll('.tab-nav-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabNavItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Aktif sınıfını tüm sekme öğelerinden kaldır
+            tabNavItems.forEach(navItem => navItem.classList.remove('active'));
+            
+            // Tıklanan sekmeye aktif sınıfını ekle
+            this.classList.add('active');
+            
+            // Tüm içerikleri gizle
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Seçilen sekmenin içeriğini göster
+            const selectedTab = this.getAttribute('data-tab');
+            document.getElementById(`tab-${selectedTab}`).classList.add('active');
+        });
+    });
+    
+    // Risk profili testi seçenekleri için tıklama olayı
+    const riskOptions = document.querySelectorAll('.risk-option');
+    
+    riskOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Bu sorudaki diğer seçeneklerin seçimini kaldır
+            const questionGroup = this.closest('.risk-question');
+            questionGroup.querySelectorAll('.risk-option').forEach(opt => opt.classList.remove('selected'));
+            
+            // Bu seçeneği seç
+            this.classList.add('selected');
+            
+            // Radio butonunu işaretle
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+    
+    // Risk profili formu gönderimi
+    document.getElementById('riskProfileForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        // Gerçek uygulamada burada form verilerini gönderip risk profilini hesaplayacak kodlar olacak
+        console.log('Risk profiliniz hesaplanıyor...');
+        
+        // Örnek bir alert
+        alert('Risk profiliniz hesaplandı! Profiliniz: Dengeli Yatırımcı');
+    });
+});
+</script>
+{% endblock %} 

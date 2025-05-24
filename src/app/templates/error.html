@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Error | BIST Profile Analysis{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <i class="fas fa-exclamation-circle error-icon"></i>
+    <h1>An Error Occurred</h1>
+    <p class="error-message">{{ message }}</p>
+    <div class="error-actions">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Homepage</a>
+        <button onclick="history.back()" class="btn">Go Back</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        text-align: center;
+        padding: 4rem 2rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .error-icon {
+        font-size: 4rem;
+        color: var(--accent-color-negative);
+        margin-bottom: 2rem;
+    }
+    
+    .error-container h1 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .error-message {
+        color: var(--neutral-color);
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+</style>
+{% endblock %} 

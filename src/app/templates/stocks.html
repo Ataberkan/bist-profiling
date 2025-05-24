@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Stocks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stock-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        background: white;
+    }
+
+    .stock-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stock-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .stock-code {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .stock-price {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #3b82f6;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric-item {
+        text-align: center;
+        padding: 0.75rem;
+        background-color: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .metric-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .positive { color: #059669; }
+    .negative { color: #dc2626; }
+    .neutral { color: #6b7280; }
+
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        text-align: center;
+    }
+
+    .filter-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+    }
+
+    .view-toggle {
+        display: flex;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        padding: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .view-toggle button {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .view-toggle button.active {
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        color: #3b82f6;
+    }
+
+    .stocks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stocks-table-view {
+        display: none;
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #3b82f6;
+        display: block;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .stocks-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .filter-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Stock Details</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Statistics Overview -->
+<div class="stats-overview">
+    <div class="stat-card">
+        <span class="stat-number">{{ stocks|length }}</span>
+        <div class="stat-label">Total Stocks</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ clusters|length }}</span>
+        <div class="stat-label">Active Clusters</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ "%.1f"|format(stocks|map(attribute='volatility')|sum / stocks|length) }}%</span>
+        <div class="stat-label">Avg Volatility</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ "%.2f"|format(stocks|map(attribute='beta')|sum / stocks|length) }}</span>
+        <div class="stat-label">Avg Beta</div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <h3 class="text-xl font-bold mb-4">Stock Filtering</h3>
+    <p class="text-white/80 mb-6">Filter stocks by various criteria to find investments that match your profile.</p>
+    
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label for="search" class="block text-sm font-medium text-white mb-2">Stock Code</label>
+            <input type="text" id="search" name="search" 
+                   class="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent" 
+                   placeholder="Enter stock code..." value="{{ request.args.get('search', '') }}">
+        </div>
+        
+        <div>
+            <label for="cluster" class="block text-sm font-medium text-white mb-2">Cluster</label>
+            <select id="cluster" name="cluster" 
+                    class="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white focus:ring-2 focus:ring-white/50 focus:border-transparent">
+                <option value="">All Clusters</option>
+                {% for cluster in clusters %}
+                <option value="{{ cluster.id }}" {% if request.args.get('cluster') == cluster.id|string %}selected{% endif %}>
+                    {{ cluster.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label for="volatility" class="block text-sm font-medium text-white mb-2">Min Volatility (%)</label>
+            <input type="number" id="volatility" name="volatility" 
+                   class="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent" 
+                   min="0" step="0.1" placeholder="0.0" value="{{ request.args.get('volatility', '') }}">
+        </div>
+        
+        <div>
+            <label for="beta" class="block text-sm font-medium text-white mb-2">Min Beta</label>
+            <input type="number" id="beta" name="beta" 
+                   class="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white placeholder-white/60 focus:ring-2 focus:ring-white/50 focus:border-transparent" 
+                   min="0" step="0.1" placeholder="0.0" value="{{ request.args.get('beta', '') }}">
+        </div>
+        
+        <div class="md:col-span-4 flex gap-3 mt-4">
+            <button type="submit" class="bg-white text-blue-600 font-medium py-2 px-6 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-filter mr-2"></i>Filter
+            </button>
+            <a href="{{ url_for('main.stocks') }}" 
+               class="bg-white/20 text-white font-medium py-2 px-6 rounded-lg hover:bg-white/30 transition-colors">
+                <i class="fas fa-refresh mr-2"></i>Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- View Toggle -->
+<div class="view-toggle">
+    <button type="button" id="gridViewBtn" class="active">
+        <i class="fas fa-th-large mr-2"></i>Card View
+    </button>
+    <button type="button" id="tableViewBtn">
+        <i class="fas fa-table mr-2"></i>Table View
+    </button>
+</div>
+
+<!-- Stocks Grid View -->
+<div class="stocks-grid-view">
+    <div class="stocks-grid">
+        {% for stock in stocks %}
+        <div class="stock-card">
+            <div class="stock-header">
+                <div>
+                    <div class="stock-code">{{ stock.code }}</div>
+                    <div class="text-sm text-gray-500">{{ stock.name if stock.name else 'Stock Name' }}</div>
+                </div>
+                <div class="stock-price">{{ "%.2f"|format(stock.avg_price) }} ₺</div>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <span class="metric-label">Volatility</span>
+                    <span class="metric-value">{{ "%.2f"|format(stock.volatility) }}%</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Daily Change</span>
+                    <span class="metric-value {{ 'positive' if stock.avg_change >= 0 else 'negative' }}">
+                        {{ "%.2f"|format(stock.avg_change) }}%
+                    </span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Beta</span>
+                    <span class="metric-value">{{ "%.2f"|format(stock.beta) }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Risk/Return</span>
+                    <span class="metric-value">{{ "%.2f"|format(stock.risk_return_ratio) }}</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <span class="cluster-badge" style="background-color: {{ stock.cluster.color }}">
+                    {{ stock.cluster.name }}
+                </span>
+                <button class="text-blue-600 hover:text-blue-800 font-medium text-sm stock-detail-btn" 
+                        data-stock-code="{{ stock.code }}">
+                    <i class="fas fa-chart-line mr-1"></i>View Details
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Stocks Table View -->
+<div class="stocks-table-view">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                            Stock Code <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                            Price <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(2)">
+                            Volatility <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(3)">
+                            Daily Change <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
+                            Beta <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(5)">
+                            Risk/Return <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cluster
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="stockTableBody">
+                    {% for stock in stocks %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="font-medium text-gray-900">{{ stock.code }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ "%.2f"|format(stock.avg_price) }} ₺
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ "%.2f"|format(stock.volatility) }}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm {{ 'text-green-600' if stock.avg_change >= 0 else 'text-red-600' }}">
+                            {{ "%.2f"|format(stock.avg_change) }}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ "%.2f"|format(stock.beta) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ "%.2f"|format(stock.risk_return_ratio) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="cluster-badge" style="background-color: {{ stock.cluster.color }}">
+                                {{ stock.cluster.name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="text-blue-600 hover:text-blue-900 stock-detail-btn" data-stock-code="{{ stock.code }}">
+                                Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Detail Modal -->
+<div id="stockDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modalStockCode">Stock Details</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="closeModal()">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-sm text-gray-500">
+                <!-- Content will be loaded via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const gridView = document.querySelector('.stocks-grid-view');
+    const tableView = document.querySelector('.stocks-table-view');
+
+    gridViewBtn.addEventListener('click', function() {
+        gridViewBtn.classList.add('active');
+        tableViewBtn.classList.remove('active');
+        gridView.style.display = 'block';
+        tableView.style.display = 'none';
+    });
+
+    tableViewBtn.addEventListener('click', function() {
+        tableViewBtn.classList.add('active');
+        gridViewBtn.classList.remove('active');
+        gridView.style.display = 'none';
+        tableView.style.display = 'block';
+    });
+
+    // Stock detail modal functionality
+    const detailBtns = document.querySelectorAll('.stock-detail-btn');
+    detailBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const stockCode = this.getAttribute('data-stock-code');
+            openStockModal(stockCode);
+        });
+    });
+});
+
+function openStockModal(stockCode) {
+    document.getElementById('modalStockCode').textContent = stockCode + ' - Stock Details';
+    document.getElementById('modalContent').innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="space-y-3">
+                <h4 class="font-medium text-gray-900">Basic Information</h4>
+                <p><strong>Stock Code:</strong> ${stockCode}</p>
+                <p><strong>Sector:</strong> Financial</p>
+                <p><strong>Market Cap:</strong> Loading...</p>
+            </div>
+            <div class="space-y-3">
+                <h4 class="font-medium text-gray-900">Technical Indicators</h4>
+                <p><strong>52 Week High:</strong> Loading...</p>
+                <p><strong>52 Week Low:</strong> Loading...</p>
+                <p><strong>P/E Ratio:</strong> Loading...</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <h4 class="font-medium text-gray-900 mb-2">Price Chart</h4>
+            <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p class="text-gray-500">Chart will be displayed here</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('stockDetailModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('stockDetailModal').classList.add('hidden');
+}
+
+function sortTable(columnIndex) {
+    const table = document.getElementById('stockTableBody');
+    const rows = Array.from(table.querySelectorAll('tr'));
+    
+    // Simple sorting logic (you can enhance this)
+    rows.sort((a, b) => {
+        const aVal = a.cells[columnIndex].textContent.trim();
+        const bVal = b.cells[columnIndex].textContent.trim();
+        
+        if (!isNaN(aVal) && !isNaN(bVal)) {
+            return parseFloat(aVal) - parseFloat(bVal);
+        }
+        return aVal.localeCompare(bVal);
+    });
+    
+    rows.forEach(row => table.appendChild(row));
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('stockDetailModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %} 

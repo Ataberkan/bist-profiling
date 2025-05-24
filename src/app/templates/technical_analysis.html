@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Technical Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-header {
+        background: linear-gradient(to right, var(--primary-800), var(--primary-600));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .analysis-nav {
+        background-color: var(--bg-primary);
+        border-bottom: 1px solid var(--border-primary);
+        padding: 1rem;
+        border-radius: 0 0 12px 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .analysis-content {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid var(--primary-600);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-container {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+        margin-bottom: 2rem;
+    }
+    
+    .indicator-card {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-primary);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .indicator-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .positive {
+        color: var(--positive-color);
+        font-weight: 600;
+    }
+    
+    .negative {
+        color: var(--negative-color);
+        font-weight: 600;
+    }
+    
+    .neutral {
+        color: var(--warning-600);
+        font-weight: 600;
+    }
+    
+    .signal-strong {
+        background-color: rgba(34, 197, 94, 0.15);
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .signal-weak {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .signal-neutral {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .analysis-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+    }
+    
+    .analysis-table th,
+    .analysis-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .analysis-table th {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .analysis-table tr:hover {
+        background-color: var(--bg-secondary);
+    }
+    
+    .btn-analysis {
+        background-color: var(--primary-600);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-analysis:hover {
+        background-color: var(--primary-700);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-secondary {
+        background-color: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+    }
+    
+    .btn-secondary:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary-600);
+        box-shadow: 0 0 0 3px var(--primary-100);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Technical Analysis</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Teknik Analiz Açıklaması -->
+<div class="tech-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">Technical Analysis Tools</h3>
+    <p class="mb-4">Use comprehensive technical analysis tools for BIST stocks to better understand market movements and support your investment decisions.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Interactive Charts</h4>
+            <p class="text-white/80">Inceleyin fiyat hareketleri mum, çizgi ve bar grafikleri ile.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Technical Indicators</h4>
+            <p class="text-white/80">Analyze popular indicators such as RSI, MACD, Bollinger Bands and more.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Support/Resistance and Fibonacci</h4>
+            <p class="text-white/80">Automated support and resistance levels and Fibonacci retracement tools.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Ana İçerik -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Yan Panel - Hisse ve Gösterge Seçimi -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Stock Selection</h3>
+            
+            <div class="mb-4">
+                <label for="stockSelect" class="block text-sm font-medium text-gray-700 mb-1">Stock:</label>
+                <select id="stockSelect" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="GARAN">GARAN - Garanti Bankası</option>
+                    <option value="THYAO">THYAO - Türk Hava Yolları</option>
+                    <option value="ASELS">ASELS - Aselsan</option>
+                    <option value="TUPRS">TUPRS - Tüpraş</option>
+                    <option value="EREGL">EREGL - Ereğli Demir Çelik</option>
+                    <option value="KCHOL">KCHOL - Koç Holding</option>
+                    <option value="BIMAS">BIMAS - BİM Birleşik Mağazalar</option>
+                    <option value="AKBNK">AKBNK - Akbank</option>
+                    <option value="SISE">SISE - Şişecam</option>
+                    <option value="YKBNK">YKBNK - Yapı Kredi Bankası</option>
+                </select>
+            </div>
+            
+            <div class="time-frame-selector">
+                <button class="time-frame-btn active" data-timeframe="1d">1G</button>
+                <button class="time-frame-btn" data-timeframe="1w">1H</button>
+                <button class="time-frame-btn" data-timeframe="1m">1A</button>
+                <button class="time-frame-btn" data-timeframe="3m">3A</button>
+                <button class="time-frame-btn" data-timeframe="1y">1Y</button>
+            </div>
+            
+            <div class="mb-4">
+                <label for="chartType" class="block text-sm font-medium text-gray-700 mb-1">Chart Type:</label>
+                <select id="chartType" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="candlestick">Candlestick Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="heikinashi">Heikin-Ashi</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Technical Indicators</h3>
+            
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <input type="checkbox" id="maIndicator" class="indicator-checkbox mr-2" checked>
+                    <label for="maIndicator" class="text-sm font-medium text-gray-700">Moving Average</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="bollinger" class="indicator-checkbox mr-2">
+                    <label for="bollinger" class="text-sm font-medium text-gray-700">Bollinger Bands</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="rsi" class="indicator-checkbox mr-2" checked>
+                    <label for="rsi" class="text-sm font-medium text-gray-700">RSI</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="macd" class="indicator-checkbox mr-2">
+                    <label for="macd" class="text-sm font-medium text-gray-700">MACD</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="stochastic" class="indicator-checkbox mr-2">
+                    <label for="stochastic" class="text-sm font-medium text-gray-700">Stochastic</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Line Tools</h3>
+            
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <input type="checkbox" id="supportResistance" class="tool-checkbox mr-2" checked>
+                    <label for="supportResistance" class="text-sm font-medium text-gray-700">Support and Resistance</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="fibonacci" class="tool-checkbox mr-2">
+                    <label for="fibonacci" class="text-sm font-medium text-gray-700">Fibonacci Levels</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="trendLines" class="tool-checkbox mr-2">
+                    <label for="trendLines" class="text-sm font-medium text-gray-700">Trend Lines</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="volumeAnalysis" class="tool-checkbox mr-2">
+                    <label for="volumeAnalysis" class="text-sm font-medium text-gray-700">Volume Analysis</label>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button id="resetChart" class="text-sm text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-undo mr-1"></i> Reset Chart Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ana İçerik - Grafik ve Analizler -->
+    <div class="lg:col-span-3">
+        <!-- Fiyat Grafikleri -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">GARAN - Garanti Bankası Stock Analysis</h3>
+                <div class="text-xl font-bold">
+                    <span id="currentPrice">24.82</span> 
+                    <span id="priceChange" class="text-sm positive ml-2">+0.42 (+1.72%)</span>
+                </div>
+            </div>
+            
+            <div class="chart-container" id="mainChart">
+                <!-- Canvas yerine bir placeholder gösterelim, gerçek uygulamada burada grafik olacak -->
+                <div class="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                    <p class="text-gray-400">Grafik yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teknik Göstergeler Özeti -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Technical Indicators Summary</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">RSI (14)</div>
+                    <div class="indicator-value">58.2</div>
+                    <div class="text-sm font-medium neutral">Neutral</div>
+                </div>
+                
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">MACD (12,26,9)</div>
+                    <div class="indicator-value positive">0.12</div>
+                    <div class="text-sm font-medium positive">Buy</div>
+                </div>
+                
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Moving Average (20)</div>
+                    <div class="indicator-value">23.65</div>
+                    <div class="text-sm font-medium positive signal-strong">Strong Buy</div>
+                </div>
+                
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Bollinger Bands</div>
+                    <div class="indicator-value">
+                        <div class="text-xs text-gray-500">Upper: 25.12</div>
+                        <div>Middle: 23.65</div>
+                        <div class="text-xs text-gray-500">Lower: 22.18</div>
+                    </div>
+                    <div class="text-sm font-medium neutral">Neutral</div>
+                </div>
+                
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Stochastic (14,3,3)</div>
+                    <div class="indicator-value">
+                        <div>%K: 68.5</div>
+                        <div class="text-xs text-gray-500">%D: 65.2</div>
+                    </div>
+                    <div class="text-sm font-medium neutral">Neutral</div>
+                </div>
+                
+                <div class="indicator-card">
+                    <div class="text-sm font-medium text-gray-500 mb-1">Volume OBV</div>
+                    <div class="indicator-value positive">+12.6M</div>
+                    <div class="text-sm font-medium positive">Buy</div>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="text-lg font-semibold text-gray-900 mb-2">Technical Analysis Summary</div>
+                    <div class="text-gray-700">
+                        <p class="mb-2">Most technical indicators are signaling a buy direction. RSI is neutral but bullish. Price is above the 20-day moving average and MACD histogram is positive. Stochastic is approaching overbought, caution is advised.</p>
+                        <p>Price is above the 20-day moving average and MACD histogram is positive. Stochastic is approaching overbought, caution is advised.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Destek ve Direnç Seviyeleri -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Support and Resistance Levels</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Resistance Levels</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Resistance 3</span>
+                                <span class="font-medium">26.50</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Resistance 2</span>
+                                <span class="font-medium">25.80</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Resistance 1</span>
+                                <span class="font-medium text-red-500 font-bold">25.20</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between py-2 border-y border-gray-200">
+                        <span class="text-gray-600">Current Price</span>
+                        <span class="font-bold">24.82</span>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Support Levels</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Support 1</span>
+                                <span class="font-medium text-green-500 font-bold">24.20</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Support 2</span>
+                                <span class="font-medium">23.65</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Support 3</span>
+                                <span class="font-medium">22.90</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Fibonacci Levels</h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%0.0</span>
+                        <span class="font-medium">21.40</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%23.6</span>
+                        <span class="font-medium">22.25</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%38.2</span>
+                        <span class="font-medium">22.85</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%50.0</span>
+                        <span class="font-medium text-blue-500 font-bold">23.35</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%61.8</span>
+                        <span class="font-medium">23.85</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%78.6</span>
+                        <span class="font-medium">24.45</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">%100.0</span>
+                        <span class="font-medium">25.30</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Fibonacci Application</h4>
+                    <p class="text-sm text-gray-600">Applied between 21.40 (5 March 2023 low) and 25.30 (18 April 2023 high).</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trend Analizi -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Trend Analysis</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Trend Indicators</h4>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Short-Term Trend (10 days)</span>
+                            <span class="font-medium text-green-500">Up</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Medium-Term Trend (50 days)</span>
+                            <span class="font-medium text-green-500">Up</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Long-Term Trend (200 days)</span>
+                            <span class="font-medium text-yellow-500">Flat</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">ADX (14)</span>
+                            <span class="font-medium">22.5 (Weak Trend)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Candle Patterns</h4>
+                    <div class="space-y-3">
+                        <div class="pattern-card">
+                            <div class="pattern-icon">
+                                <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Bearish Abandoned Baby</div>
+                                <div class="text-xs text-gray-500">Formed 2 days ago - Buy signal</div>
+                            </div>
+                        </div>
+                        
+                        <div class="pattern-card">
+                            <div class="pattern-icon">
+                                <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium">Three White Soldiers</div>
+                                <div class="text-xs text-gray-500">Formed 5 days ago - Buy signal</div>
+                            </div>
+                        </div>
+                        
+                        <div class="pattern-card">
+                            <div class="pattern-icon">
+                                <i class="fas fa-times-circle text-gray-300 text-3xl"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-400">Two Crows</div>
+                                <div class="text-xs text-gray-400">12 days ago - Sell signal (old)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-yellow-50 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-yellow-500 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Trend Summary</div>
+                        <div class="text-gray-700">
+                            <p>Stock is in a short and medium-term uptrend, but ADX value of 22.5 indicates no strong trend. Recent candle patterns are positive signals. Price above 25.20 could accelerate the uptrend. However, if 24.20 support is broken, the medium-term trend could change.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde çalışacak kodlar (gerçek uygulamada grafikler ve interaktif özellikler burada olacak)
+    console.log('Teknik analiz sayfası yüklendi');
+    
+    // Zaman dilimi seçim butonları
+    const timeFrameButtons = document.querySelectorAll('.time-frame-btn');
+    timeFrameButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Aktif sınıfını tüm butonlardan kaldır
+            timeFrameButtons.forEach(btn => btn.classList.remove('active'));
+            // Tıklanan butona aktif sınıfını ekle
+            this.classList.add('active');
+            
+            // Gerçek uygulamada burada grafiği güncelleyecek kodlar olacak
+            console.log('Zaman dilimi değiştirildi:', this.dataset.timeframe);
+        });
+    });
+    
+    // Gösterge onay kutuları
+    const indicatorCheckboxes = document.querySelectorAll('.indicator-checkbox');
+    indicatorCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Gerçek uygulamada burada göstergeleri açıp kapatacak kodlar olacak
+            console.log('Gösterge durumu değiştirildi:', this.id, this.checked);
+        });
+    });
+    
+    // Çizgi araçları onay kutuları
+    const toolCheckboxes = document.querySelectorAll('.tool-checkbox');
+    toolCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Gerçek uygulamada burada çizgi araçlarını açıp kapatacak kodlar olacak
+            console.log('Çizgi aracı durumu değiştirildi:', this.id, this.checked);
+        });
+    });
+    
+    // Hisse değişim olayı
+    document.getElementById('stockSelect').addEventListener('change', function() {
+        // Gerçek uygulamada burada hisse verilerini güncelleyecek kodlar olacak
+        console.log('Hisse değiştirildi:', this.value);
+    });
+    
+    // Grafik tipi değişim olayı
+    document.getElementById('chartType').addEventListener('change', function() {
+        // Gerçek uygulamada burada grafik tipini değiştirecek kodlar olacak
+        console.log('Grafik tipi değiştirildi:', this.value);
+    });
+    
+    // Grafik ayarlarını sıfırlama olayı
+    document.getElementById('resetChart').addEventListener('click', function() {
+        // Gerçek uygulamada burada grafik ayarlarını sıfırlayacak kodlar olacak
+        console.log('Grafik ayarları sıfırlanıyor...');
+    });
+});
+</script>
+{% endblock %} 

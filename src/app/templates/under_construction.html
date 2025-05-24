@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Under Construction{% endblock %}
+
+{% block content %}
+<div class="construction-container">
+    <i class="fas fa-tools construction-icon"></i>
+    <h1>Under Construction</h1>
+    <p>This feature is currently under development. It will be available very soon!</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Back to Homepage</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .construction-container {
+        text-align: center;
+        padding: 4rem 2rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .construction-icon {
+        font-size: 4rem;
+        color: var(--primary-color);
+        margin-bottom: 2rem;
+    }
+    
+    .construction-container h1 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .construction-container p {
+        color: var(--neutral-color);
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %} 

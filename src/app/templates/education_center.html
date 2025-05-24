@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Education Center{% endblock %}
+
+{% block extra_css %}
+<style>
+    .education-header {
+        background: linear-gradient(to right, #4f46e5, #6366f1);
+        border-radius: 8px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .topic-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .topic-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .topic-image {
+        height: 160px;
+        background-color: #f3f4f6;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    
+    .topic-content {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .topic-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .topic-summary {
+        color: #4b5563;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+    
+    .topic-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .level-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .level-beginner {
+        background-color: #10b981;
+    }
+    
+    .level-intermediate {
+        background-color: #f59e0b;
+    }
+    
+    .level-advanced {
+        background-color: #ef4444;
+    }
+    
+    .video-card {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .video-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .video-thumbnail {
+        position: relative;
+        height: 160px;
+        background-color: #f3f4f6;
+        background-size: cover;
+        background-position: center;
+    }
+    
+    .video-play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 48px;
+        height: 48px;
+        background-color: rgba(255,255,255,0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .video-play-button i {
+        color: #4f46e5;
+        font-size: 1.25rem;
+    }
+    
+    .video-duration {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background-color: rgba(0,0,0,0.7);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+    
+    .video-content {
+        padding: 1rem;
+    }
+    
+    .video-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .glossary-section {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+    
+    .glossary-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem 0;
+    }
+    
+    .glossary-term {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .glossary-definition {
+        color: #4b5563;
+    }
+    
+    .path-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .path-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    
+    .path-image {
+        height: 120px;
+        background-color: #f3f4f6;
+        background-size: cover;
+        background-position: center;
+    }
+    
+    .path-content {
+        padding: 1rem;
+    }
+    
+    .path-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .path-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+    
+    .category-nav {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        scrollbar-width: none;
+    }
+    
+    .category-nav::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .category-nav-item {
+        flex: 0 0 auto;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        margin-right: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .category-nav-item.active {
+        background-color: #4f46e5;
+        color: white;
+    }
+    
+    .category-nav-item:not(.active) {
+        background-color: #f3f4f6;
+        color: #4b5563;
+    }
+    
+    .category-nav-item:not(.active):hover {
+        background-color: #e5e7eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Education Center</h2>
+    <p class="mt-2 text-sm text-gray-500">Last update: {{ update_date }}</p>
+</div>
+
+<!-- Eğitim Merkezi Açıklaması -->
+<div class="education-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">Stock Market Education Center</h3>
+    <p class="mb-4">Increase your stock market knowledge with various educational materials offered on the BIST Profiling platform and make more informed investment decisions.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Machine Learning</h4>
+            <p class="text-white/80">Learn about clustering algorithms and their financial applications.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Investment Strategies</h4>
+            <p class="text-white/80">Learn fundamental and technical analysis, portfolio management and diversification strategies.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded">
+            <h4 class="text-lg font-medium mb-2">Risk Management</h4>
+            <p class="text-white/80">Discover how to manage investment risks and limit losses.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Öğrenme Patikaları -->
+<div class="mb-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-8">Learning Paths</h2>
+<div class="mb-10">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Öğrenme Patikaları</h3>
+    <p class="text-gray-600 mb-6">Hedefe yönelik, adım adım öğrenme yolları ile becerilerinizi geliştirin.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for path in learning_paths %}
+        <div class="path-card">
+            <div class="path-image" style="background-image: url('{{ path.image_url }}')"></div>
+            <div class="path-content">
+                <div class="path-title">{{ path.title }}</div>
+                <p class="text-sm text-gray-600">{{ path.summary }}</p>
+                <div class="path-meta">
+                    <span>{{ path.topics_count }} Konu</span>
+                    <span>{{ path.duration }}</span>
+                    <span>{{ path.level }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Patikaya Başla
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Kategori Seçimi -->
+<div class="category-nav">
+    <div class="category-nav-item active" data-category="all">All Topics</div>
+    <div class="category-nav-item" data-category="basics">Stock Market Basics</div>
+    <div class="category-nav-item" data-category="technical">Technical Analysis</div>
+    <div class="category-nav-item" data-category="fundamental">Fundamental Analysis</div>
+    <div class="category-nav-item" data-category="portfolio">Portfolio Management</div>
+    <div class="category-nav-item" data-category="risk">Risk Management</div>
+</div>
+
+<!-- Konular -->
+<div class="mb-10 category-content" id="content-all">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Tüm Eğitim Konuları</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% for topic in ml_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% for topic in investment_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% for topic in risk_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for video in video_lessons %}
+        <div class="video-card">
+            <div class="video-thumbnail" style="background-image: url('{{ video.image_url }}')">
+                <div class="video-play-button">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="video-duration">{{ video.duration }}</div>
+            </div>
+            <div class="video-content">
+                <div class="video-title">{{ video.title }}</div>
+                <p class="text-sm text-gray-600 mb-2">{{ video.summary }}</p>
+                <div class="video-meta">
+                    <span>{{ video.instructor }}</span>
+                    <span>{{ video.views }} izlenme</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Makine Öğrenmesi -->
+<div class="mb-10 category-content hidden" id="content-ml">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Makine Öğrenmesi</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for topic in ml_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Yatırım Stratejileri -->
+<div class="mb-10 category-content hidden" id="content-investment">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Yatırım Stratejileri</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for topic in investment_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Risk Yönetimi -->
+<div class="mb-10 category-content hidden" id="content-risk">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Risk Yönetimi</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for topic in risk_topics %}
+        <div class="topic-card">
+            <div class="topic-image" style="background-image: url('{{ topic.image_url }}')"></div>
+            <div class="topic-content">
+                <div class="topic-title">{{ topic.title }}</div>
+                <div class="topic-summary">{{ topic.summary }}</div>
+                <div class="topic-meta">
+                    <span>
+                        <span class="level-badge 
+                            {% if topic.level == 'Başlangıç' %}level-beginner
+                            {% elif topic.level == 'Orta' %}level-intermediate
+                            {% else %}level-advanced{% endif %}">
+                            {{ topic.level }}
+                        </span>
+                    </span>
+                    <span>{{ topic.duration }}</span>
+                </div>
+                <button class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded">
+                    Konuyu Görüntüle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Video Dersler -->
+<div class="mb-10 category-content hidden" id="content-videos">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Video Dersler</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for video in video_lessons %}
+        <div class="video-card">
+            <div class="video-thumbnail" style="background-image: url('{{ video.image_url }}')">
+                <div class="video-play-button">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="video-duration">{{ video.duration }}</div>
+            </div>
+            <div class="video-content">
+                <div class="video-title">{{ video.title }}</div>
+                <p class="text-sm text-gray-600 mb-2">{{ video.summary }}</p>
+                <div class="video-meta">
+                    <span>{{ video.instructor }}</span>
+                    <span>{{ video.views }} izlenme</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Finansal Terimler Sözlüğü -->
+<div class="mb-10">
+    <h3 class="text-xl font-bold text-gray-900 mb-4">Finansal Terimler Sözlüğü</h3>
+    <p class="text-gray-600 mb-6">Borsaya dair önemli terimlerin anlamlarını öğrenin.</p>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+        <div class="glossary-section">
+            {% for term in glossary_terms %}
+            <div class="glossary-item">
+                <div class="glossary-term">{{ term.term }}</div>
+                <div class="glossary-definition">{{ term.definition }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde çalışacak kodlar
+    console.log('Education center page loaded');
+    
+    // Kategori seçim işlemleri
+    const categoryNavItems = document.querySelectorAll('.category-nav-item');
+    const categoryContents = document.querySelectorAll('.category-content');
+    
+    categoryNavItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Aktif sınıfını tüm nav öğelerinden kaldır
+            categoryNavItems.forEach(navItem => navItem.classList.remove('active'));
+            
+            // Tıklanan öğeye aktif sınıfını ekle
+            this.classList.add('active');
+            
+            // Tüm içerikleri gizle
+            categoryContents.forEach(content => content.classList.add('hidden'));
+            
+            // Seçilen kategorinin içeriğini göster
+            const selectedCategory = this.getAttribute('data-category');
+            document.getElementById(`content-${selectedCategory}`).classList.remove('hidden');
+        });
+    });
+});
+</script>
+{% endblock %} 

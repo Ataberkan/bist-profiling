@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profil Analiz | Sektör Analizi{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sector-header {
+        background: linear-gradient(to right, var(--success-800), var(--success-600));
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .sector-nav {
+        background-color: var(--bg-primary);
+        border-bottom: 1px solid var(--border-primary);
+        padding: 1rem;
+        border-radius: 0 0 12px 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .sector-card {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid var(--success-600);
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .sector-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .positive {
+        color: var(--positive-color);
+        font-weight: 600;
+    }
+    
+    .negative {
+        color: var(--negative-color);
+        font-weight: 600;
+    }
+    
+    .neutral {
+        color: var(--warning-600);
+        font-weight: 600;
+    }
+    
+    .sector-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+    }
+    
+    .sector-table th, .sector-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    
+    .sector-table th {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .sector-table tr:hover {
+        background-color: var(--bg-secondary);
+    }
+    
+    .chart-container {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+        margin-bottom: 2rem;
+    }
+    
+    .sector-metric {
+        text-align: center;
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .sector-metric:hover {
+        background-color: var(--bg-tertiary);
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .performance-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .performance-excellent {
+        background-color: rgba(34, 197, 94, 0.15);
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .performance-good {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .performance-average {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .performance-poor {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-sector {
+        background-color: var(--success-600);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-sector:hover {
+        background-color: var(--success-700);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .filter-form {
+        background-color: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-primary);
+        margin-bottom: 2rem;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: var(--success-600);
+        box-shadow: 0 0 0 3px var(--success-100);
+    }
+    
+    .correlation-cell {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 500;
+    }
+    
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .high-growth {
+        background-color: #8B5CF6;
+    }
+    
+    .balanced-growth {
+        background-color: #3B82F6;
+    }
+    
+    .value-sectors {
+        background-color: #10B981;
+    }
+    
+    .cyclic-sectors {
+        background-color: #F59E0B;
+    }
+    
+    .rotation-arrow {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding-left: 20px;
+    }
+    
+    .rotation-arrow:before {
+        content: "→";
+        position: absolute;
+        left: 5px;
+        font-size: 1.2rem;
+        color: #6B7280;
+    }
+    
+    .strength-strong {
+        color: #34A853;
+        font-weight: 600;
+    }
+    
+    .strength-medium {
+        color: #FBBC05;
+        font-weight: 500;
+    }
+    
+    .strength-weak {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sayfa Başlığı -->
+<div class="border-b border-gray-200 pb-5 mb-6">
+    <h2 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">Sektör Analizi</h2>
+    <p class="mt-2 text-sm text-gray-500">Son güncelleme: {{ update_date }}</p>
+</div>
+
+<!-- Sektör Analizi Açıklaması -->
+<div class="sector-header mb-8">
+    <h3 class="text-2xl font-bold mb-4">BIST Sektörleri</h3>
+    <p class="mb-4">BIST içerisindeki sektörlerin performanslarını, kümeleme analizlerini ve aralarındaki ilişkileri detaylı olarak inceleyin.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6" role="group" aria-label="Sektör analizi özellikleri">
+        <div class="bg-white/10 p-4 rounded" role="region" aria-label="Sektörel Performans Bilgisi">
+            <h4 class="text-lg font-medium mb-2">Sektörel Performans</h4>
+            <p class="text-white/80">Sektörlerin kısa ve uzun vadeli performanslarını karşılaştırın.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded" role="region" aria-label="Korelasyon Analizi Bilgisi">
+            <h4 class="text-lg font-medium mb-2">Korelasyon Analizi</h4>
+            <p class="text-white/80">Sektörler arasındaki ilişkileri ve etkileşimleri analiz edin.</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded" role="region" aria-label="Sektör Rotasyonu Bilgisi">
+            <h4 class="text-lg font-medium mb-2">Sektör Rotasyonu</h4>
+            <p class="text-white/80">Piyasa döngüsünde lider ve geri kalan sektörleri tespit edin.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Ana İçerik -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Yan Panel - Filtreler ve Seçenekler -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Görünüm Seçenekleri</h3>
+            
+            <div class="mb-4">
+                <label for="performancePeriod" class="block text-sm font-medium text-gray-700 mb-1">Performans Dönemi:</label>
+                <select id="performancePeriod" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="daily">Günlük</option>
+                    <option value="weekly">Haftalık</option>
+                    <option value="monthly">Aylık</option>
+                    <option value="yearly" selected>Yıllık</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-1">Sıralama:</label>
+                <select id="sortBy" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="performance">Performans</option>
+                    <option value="market_cap">Piyasa Değeri</option>
+                    <option value="pe_ratio">F/K Oranı</option>
+                    <option value="pb_ratio">PD/DD Oranı</option>
+                    <option value="dividend_yield">Temettü Verimi</option>
+                    <option value="roe">Özkaynak Karlılığı</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="viewType" class="block text-sm font-medium text-gray-700 mb-1">Görünüm Tipi:</label>
+                <select id="viewType" class="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary">
+                    <option value="table">Tablo</option>
+                    <option value="heatmap">Isı Haritası</option>
+                    <option value="chart">Grafik</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sektör İstatistikleri</h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Toplam Sektör</span>
+                    <span class="font-medium">10</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Toplam Piyasa Değeri</span>
+                    <span class="font-medium">1,805.4 milyar TL</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Ortalama F/K</span>
+                    <span class="font-medium">9.1</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Ortalama PD/DD</span>
+                    <span class="font-medium">1.3</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Ortalama ROE</span>
+                    <span class="font-medium">12.1%</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Ortalama Temettü</span>
+                    <span class="font-medium">1.7%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ana İçerik -->
+    <div class="lg:col-span-3">
+        <!-- Sektör Performans Tablosu -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sektör Performans Tablosu</h3>
+            
+            <div class="table-container">
+                <table class="sector-table" role="table" aria-label="Sektör Performans Tablosu">
+                    <thead>
+                        <tr>
+                            <th scope="col">Sektör</th>
+                            <th scope="col">Günlük Değişim</th>
+                            <th scope="col">Piyasa Değeri</th>
+                            <th scope="col">F/K</th>
+                            <th scope="col">PD/DD</th>
+                            <th scope="col">Temettü</th>
+                            <th scope="col">ROE</th>
+                            <th scope="col">Yıllık Perf.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sector in sectors %}
+                        <tr>
+                            <td class="font-medium">{{ sector.name }}</td>
+                            <td class="{% if sector.change > 0 %}positive{% elif sector.change < 0 %}negative{% else %}neutral{% endif %}">
+                                {{ sector.change }}%
+                            </td>
+                            <td>{{ sector.market_cap }} milyar TL</td>
+                            <td>{{ sector.pe_ratio }}</td>
+                            <td>{{ sector.pb_ratio }}</td>
+                            <td>{{ sector.dividend_yield }}%</td>
+                            <td>{{ sector.roe }}%</td>
+                            <td class="{% if sector.performance.yearly > 0 %}positive{% elif sector.performance.yearly < 0 %}negative{% else %}neutral{% endif %}">
+                                {{ sector.performance.yearly }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">Sektör Performans Grafiği</h4>
+                <div class="chart-container">
+                    <!-- Canvas yerine bir placeholder gösterelim, gerçek uygulamada burada grafik olacak -->
+                    <div class="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                        <p class="text-gray-400">Grafik yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sektörel Korelasyon Matrisi -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sektör Korelasyon Matrisi</h3>
+            
+            <div class="overflow-x-auto">
+                <table class="sector-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {% for sector in correlation_matrix.sectors %}
+                            <th>{{ sector }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(correlation_matrix.sectors|length) %}
+                        <tr>
+                            <th>{{ correlation_matrix.sectors[i] }}</th>
+                            {% for j in range(correlation_matrix.data[i]|length) %}
+                            <td>
+                                {% set correlation = correlation_matrix.data[i][j] %}
+                                {% set bg_color = "#ffffff" %}
+                                {% if correlation == 1.0 %}
+                                    {% set bg_color = "#34A853" %}
+                                {% elif correlation >= 0.8 %}
+                                    {% set bg_color = "#4CAF50" %}
+                                {% elif correlation >= 0.6 %}
+                                    {% set bg_color = "#8BC34A" %}
+                                {% elif correlation >= 0.4 %}
+                                    {% set bg_color = "#CDDC39" %}
+                                {% elif correlation >= 0.2 %}
+                                    {% set bg_color = "#FFEB3B" %}
+                                {% elif correlation >= 0.0 %}
+                                    {% set bg_color = "#FFC107" %}
+                                {% elif correlation >= -0.2 %}
+                                    {% set bg_color = "#FF9800" %}
+                                {% elif correlation >= -0.4 %}
+                                    {% set bg_color = "#FF5722" %}
+                                {% else %}
+                                    {% set bg_color = "#F44336" %}
+                                {% endif %}
+                                
+                                <div class="correlation-cell" style="background-color: {{ bg_color }}">
+                                    {{ "%.2f"|format(correlation) }}
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6 bg-blue-50 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Korelasyon Analizi</div>
+                        <div class="text-gray-700">
+                            <p>Korelasyon matrisi sektörler arasındaki fiyat hareketlerinin ilişkisini gösterir. 1.00 değeri mükemmel pozitif korelasyonu, -1.00 değeri ise mükemmel negatif korelasyonu ifade eder. Bankacılık ve Holding sektörleri arasında yüksek korelasyon (0.85) görülürken, Teknoloji ve Gıda sektörleri arasında daha düşük bir korelasyon (0.42) bulunmaktadır. Bu bilgiler portföy çeşitlendirmesi için önemlidir.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sektör Kümeleme Analizi -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sektör Kümeleme Analizi</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-md font-semibold text-gray-800 mb-3">Küme Özellikleri</h4>
+                    <div class="space-y-4">
+                        {% for cluster in sector_clusters %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <div class="cluster-badge {% if cluster.id == 1 %}high-growth{% elif cluster.id == 2 %}balanced-growth{% elif cluster.id == 3 %}value-sectors{% else %}cyclic-sectors{% endif %} mr-2">
+                                    Küme {{ cluster.id }}
+                                </div>
+                                <h5 class="font-semibold">{{ cluster.name }}</h5>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <div class="text-sm text-gray-500">Sektörler:</div>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    {% for sector in cluster.sectors %}
+                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">{{ sector }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-2 text-sm">
+                                <div>
+                                    <div class="text-gray-500">Ort. F/K</div>
+                                    <div class="font-medium">{{ cluster.avg_pe }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">Ort. Büyüme</div>
+                                    <div class="font-medium">{{ cluster.avg_growth }}%</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">Volatilite</div>
+                                    <div class="font-medium">{{ cluster.volatility }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-md font-semibold text-gray-800 mb-3">Kümeleme Haritası</h4>
+                    <div class="chart-container">
+                        <!-- Canvas yerine bir placeholder gösterelim, gerçek uygulamada burada grafik olacak -->
+                        <div class="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                            <p class="text-gray-400">Kümeleme haritası yükleniyor...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-gray-600">
+                        <p>Bu harita, sektörleri F/K oranı ve büyüme oranı gibi temel değişkenlere göre konumlandırır. Benzer özellikler gösteren sektörler aynı kümede gruplanır. Kümeleme algoritması, çok boyutlu veri setini analiz ederek anlamlı gruplar oluşturur.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sektör Rotasyonu -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sektör Rotasyonu Analizi</h3>
+            
+            <div class="mb-6">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">Dönemsel En İyi/En Kötü Performans</h4>
+                
+                <div class="table-container">
+                    <table class="sector-table">
+                        <thead>
+                            <tr>
+                                <th>Dönem</th>
+                                <th>En İyi Performans</th>
+                                <th>En Kötü Performans</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(sector_rotation.periods|length) %}
+                            <tr>
+                                <td>{{ sector_rotation.periods[i] }}</td>
+                                <td class="positive">{{ sector_rotation.best_performing[i] }}</td>
+                                <td class="negative">{{ sector_rotation.worst_performing[i] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">Sektör Geçişleri</h4>
+                
+                <div class="space-y-3">
+                    {% for trend in sector_rotation.rotation_trends %}
+                    <div class="flex items-center p-3 border border-gray-200 rounded-lg">
+                        <div class="text-gray-800 font-medium w-20">{{ trend.period }}</div>
+                        <div class="negative">{{ trend.from }}</div>
+                        <div class="rotation-arrow"></div>
+                        <div class="positive">{{ trend.to }}</div>
+                        <div class="ml-auto strength-{% if trend.strength == 'Güçlü' %}strong{% elif trend.strength == 'Orta' %}medium{% else %}weak{% endif %}">
+                            {{ trend.strength }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="bg-amber-50 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-lightbulb text-amber-500 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-lg font-semibold text-gray-900 mb-2">Rotasyon Stratejisi</div>
+                        <div class="text-gray-700">
+                            <p>Sektör rotasyonu, ekonomik döngülerin farklı aşamalarında performans gösteren sektörlere yatırım yapma stratejisidir. Geçiş trendleri, yatırımcı fonlarının bir sektörden diğerine aktığını gösterir. Örneğin, Q1 2024'te İnşaat'tan Bankacılık'a güçlü bir geçiş görülmektedir. Bu tür geçişler genellikle ekonomik koşullar, politika değişiklikleri veya sektörel gelişmeler tarafından tetiklenir.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sayfa yüklendiğinde çalışacak kodlar
+    console.log('Sektör analizi sayfası yüklendi');
+    
+    // Dönem değişim olayı
+    document.getElementById('performancePeriod').addEventListener('change', function() {
+        // Gerçek uygulamada burada performans dönemine göre görünümü güncelleyecek kodlar olacak
+        console.log('Performans dönemi değiştirildi:', this.value);
+    });
+    
+    // Sıralama değişim olayı
+    document.getElementById('sortBy').addEventListener('change', function() {
+        // Gerçek uygulamada burada sıralama kriterine göre tabloyu güncelleyecek kodlar olacak
+        console.log('Sıralama kriteri değiştirildi:', this.value);
+    });
+    
+    // Görünüm tipi değişim olayı
+    document.getElementById('viewType').addEventListener('change', function() {
+        // Gerçek uygulamada burada görünüm tipini değiştirecek kodlar olacak
+        console.log('Görünüm tipi değiştirildi:', this.value);
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}BIST Profile Analysis | Clustering Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .update-info {
+        color: var(--neutral-color);
+        font-size: 0.9rem;
+    }
+
+    .feature-list {
+        margin: 1rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .feature-list li {
+        margin-bottom: 0.5rem;
+    }
+
+    .responsive-image {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .chart-description {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .cluster-descriptions {
+        margin-top: 2rem;
+    }
+
+    .cluster-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .cluster-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .cluster-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .cluster-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: white;
+    }
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        text-align: center;
+    }
+
+    .metric .label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric .value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .positive {
+        color: #059669;
+    }
+
+    .negative {
+        color: #dc2626;
+    }
+
+    .neutral {
+        color: #6b7280;
+    }
+
+    .stock-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .stock-badge {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .comparison-chart {
+        height: 400px;
+        margin: 2rem 0;
+    }
+
+    .investor-profile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .profile-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .profile-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .conservative { border-color: #22c55e; background-color: #f0fdf4; }
+    .balanced { border-color: #3b82f6; background-color: #eff6ff; }
+    .growth { border-color: #f59e0b; background-color: #fffbeb; }
+    .aggressive { border-color: #ef4444; background-color: #fef2f2; }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .metric-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .comparison-chart {
+            height: 300px;
+        }
+        
+        .investor-profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Clustering Analysis Results</h1>
+        <p class="text-lg text-gray-600">AI-powered stock clustering based on financial indicators</p>
+        <div class="mt-2 text-sm text-gray-500">Last Update: {{ update_date }}</div>
+    </div>
+
+    <!-- Clustering Analysis Description -->
+    <div class="card mb-8">
+        <h2 class="card-title">About Clustering Analysis</h2>
+        <p>This analysis groups BIST-30 stocks into similar categories based on their financial indicators. Main features used:</p>
+        <ul class="mt-4 space-y-2 text-gray-600">
+            <li><strong>Price Volatility:</strong> Shows the fluctuation amount of stock price. High volatility means higher risk.</li>
+            <li><strong>Average Daily Change:</strong> Shows the average daily return rate of the stock.</li>
+            <li><strong>Beta:</strong> Shows the correlation of the stock with the market. Values greater than 1 indicate more volatile than the market, values less than 1 indicate less volatile than the market.</li>
+            <li><strong>Risk-Return Ratio:</strong> Shows return per unit of risk. High values mean better risk-return balance.</li>
+        </ul>
+    </div>
+
+    <!-- Cluster Details -->
+    <div class="mb-12">
+        <h2 class="section-title">Cluster Details</h2>
+        
+        {% for cluster_id, description in cluster_descriptions.items() %}
+        <div class="cluster-card" style="border-left: 4px solid {{ cluster_colors[cluster_id] }};">
+            <div class="cluster-header">
+                <h3>Cluster {{ cluster_id }}</h3>
+                <span class="cluster-badge" style="background-color: {{ cluster_colors[cluster_id] }};">
+                    {{ description.investor_profile }}
+                </span>
+            </div>
+            
+            <p class="text-gray-600 mb-4">{{ description.summary }}</p>
+            
+            <div class="metric-grid">
+                <div class="metric">
+                    <div class="label">Avg. Volatility</div>
+                    <div class="value">{{ "%.2f"|format(description.avg_volatility) }}%</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Avg. Change</div>
+                    <div class="value {% if description.avg_change > 0 %}positive{% elif description.avg_change < 0 %}negative{% else %}neutral{% endif %}">
+                        {% if description.avg_change > 0 %}+{% endif %}{{ "%.2f"|format(description.avg_change) }}%
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="label">Avg. Beta</div>
+                    <div class="value">{{ "%.2f"|format(description.avg_beta) }}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Risk-Return</div>
+                    <div class="value {% if description.risk_return_ratio > 0 %}positive{% elif description.risk_return_ratio < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ "%.2f"|format(description.risk_return_ratio) }}
+                    </div>
+                </div>
+            </div>
+            
+            <h4>Stocks:</h4>
+            <div class="stock-list">
+                {% for stock in clusters_data[cluster_id] %}
+                <span class="stock-badge">{{ stock }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Cluster Comparison -->
+    <div class="card mb-12">
+        <h2 class="section-title">Cluster Comparison</h2>
+        <canvas id="comparisonChart" class="comparison-chart"></canvas>
+    </div>
+
+    <!-- Investor Profile Recommendations -->
+    <div class="mb-12">
+        <h2 class="section-title">Investor Profile Recommendations</h2>
+        
+        <div class="investor-profile-grid">
+            {% for cluster_id, description in cluster_descriptions.items() %}
+            <div class="profile-card {{ description.investor_profile.lower().replace(' ', '') }}">
+                <div class="profile-icon">
+                    {% if description.investor_profile == "Conservative" %}🛡️
+                    {% elif description.investor_profile == "Balanced" %}⚖️
+                    {% elif description.investor_profile == "Growth Oriented" %}📈
+                    {% elif description.investor_profile == "Aggressive" %}🚀
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-semibold mb-2">{{ description.investor_profile }}</h3>
+                <h4>Recommended Stocks:</h4>
+                <div class="mt-2 text-sm">
+                    {% for stock in clusters_data[cluster_id][:3] %}
+                        {{ stock }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    {% if clusters_data[cluster_id]|length > 3 %} and {{ clusters_data[cluster_id]|length - 3 }} more...{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Cluster comparison chart
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Cluster 0', 'Cluster 1', 'Cluster 2', 'Cluster 3'],
+            datasets: [{
+                label: 'Average Volatility (%)',
+                data: [
+                    {% for cluster_id, description in cluster_descriptions.items() %}
+                    {{ description.avg_volatility }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2
+            }, {
+                label: 'Average Change (%)',
+                data: [
+                    {% for cluster_id, description in cluster_descriptions.items() %}
+                    {{ description.avg_change }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 2
+            }, {
+                label: 'Average Beta',
+                data: [
+                    {% for cluster_id, description in cluster_descriptions.items() %}
+                    {{ description.avg_beta }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+});
+</script>
+{% endblock %} 
