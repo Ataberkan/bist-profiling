@@ -196,13 +196,6 @@ This project is licensed under the MIT License. See `LICENSE` file for details.
 - [ ] Social trading features
 - [ ] Options and derivatives analysis
 
-## 📞 Support
-
-For questions and support:
-- Create an Issue on GitHub
-- Contact: [email]
-- Documentation: [wiki/docs link]
-
 ## 🙏 Acknowledgments
 
 - BIST for market data
